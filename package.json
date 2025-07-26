@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "dh-reporting-shared": "file:../dh-reporting-shared"
+  }
+}
