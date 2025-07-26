@@ -1,232 +1,347 @@
-# DH-Reporting Shared Library
+# DH-Reporting Mobile App
 
-A shared utility library for the DH-Reporting mobile time tracking application. This package contains common functions, types, and constants used across the mobile and web applications.
+A React Native mobile application for time tracking and project management, designed for Israeli companies with 5,000+ B2B employees. Built with Expo for cross-platform iOS and Android support.
 
-## 📋 Overview
+## 📱 Features
 
-This shared library provides:
-- **Validation functions** for user input and business rules
-- **Date/time utilities** for work hours calculation and formatting
-- **Business logic functions** for time tracking and project management
-- **Type definitions** for common data structures
-- **Constants** for application-wide configuration
+- **Offline-First**: Full functionality without internet connection
+- **Time Tracking**: Log work hours with project assignment
+- **Project Management**: View assigned projects and track progress
+- **Authentication**: Email-based OTP authentication with biometric support
+- **Multi-Location**: Track work from Office, Home, Client Site, or Remote
+- **Data Sync**: Automatic cloud synchronization when online
+- **Real-time Reports**: View time entries and project analytics
 
 ## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js 18+ LTS** ([Download here](https://nodejs.org))
+- **Expo CLI** (`npm install -g @expo/cli`)
+- **Android Studio** (for Android development)
+- **Xcode** (for iOS development, macOS only)
 
 ### Installation
 
 ```bash
-# For local development (from parent directory)
-npm install ../dh-reporting-shared
-
-# For published package (future)
-npm install @dh-reporting/shared
-```
-
-### Basic Usage
-
-```javascript
-// Import validation functions
-import { validateEmail, validateTimeEntry } from '@dh-reporting/shared';
-
-// Import date utilities
-import { formatWorkHours, calculateDuration } from '@dh-reporting/shared';
-
-// Import types
-import { User, Project, TimeEntry } from '@dh-reporting/shared';
-
-// Import constants
-import { APP_CONSTANTS, TIME_FORMATS } from '@dh-reporting/shared';
-```
-
-## 📁 Project Structure
-
-```
-src/
-├── validation/          # Input validation functions
-│   ├── userValidation.js
-│   ├── timeValidation.js
-│   └── projectValidation.js
-├── utils/              # Utility functions
-│   ├── dateUtils.js
-│   ├── timeUtils.js
-│   └── formatUtils.js
-├── business-logic/     # Business rules and calculations
-│   ├── timeCalculations.js
-│   ├── projectLogic.js
-│   └── overtimeRules.js
-├── types/              # Type definitions
-│   ├── commonTypes.js
-│   ├── userTypes.js
-│   └── projectTypes.js
-├── constants/          # Application constants
-│   ├── appConstants.js
-│   ├── errorCodes.js
-│   └── timeFormats.js
-├── testing/            # Testing utilities
-│   ├── testUtils.js
-│   ├── mockData.js
-│   └── testHelpers.js
-└── index.js           # Main export file
-```
-
-## 🛠️ Available Functions
-
-### Validation Functions
-
-```javascript
-import { validateEmail, validateEmployeeCode, validateTimeEntry } from '@dh-reporting/shared';
-
-// Email validation
-const isValidEmail = validateEmail('user@example.com'); // true/false
-
-// Employee code validation  
-const isValidCode = validateEmployeeCode('EMP001'); // true/false
-
-// Time entry validation
-const isValidEntry = validateTimeEntry({
-  projectId: 'proj-123',
-  date: '2024-01-15',
-  duration: 480 // minutes
-}); // true/false
-```
-
-### Date/Time Utilities
-
-```javascript
-import { formatWorkHours, calculateDuration, isBusinessDay } from '@dh-reporting/shared';
-
-// Format work hours for display
-const formatted = formatWorkHours(480); // "8.0 hours"
-
-// Calculate duration between times
-const duration = calculateDuration('09:00', '17:30'); // 510 minutes
-
-// Check if date is a business day
-const isBusiness = isBusinessDay(new Date()); // true/false
-```
-
-### Business Logic Functions
-
-```javascript
-import { calculateOvertime, validateWorkSchedule, getProjectProgress } from '@dh-reporting/shared';
-
-// Calculate overtime hours
-const overtime = calculateOvertime(dailyHours, 8); // hours over standard
-
-// Validate work schedule
-const isValid = validateWorkSchedule(timeEntries); // true/false
-
-// Calculate project progress
-const progress = getProjectProgress(timeEntries, allocatedHours); // percentage
-```
-
-## 🏗️ Development
-
-### Setup
-
-```bash
 # Clone the repository
-git clone https://bitbucket.org/your-username/dh-reporting-shared.git
-cd dh-reporting-shared
+git clone https://bitbucket.org/your-username/dh-reporting-mobile.git
+cd dh-reporting-mobile
 
 # Install dependencies
 npm install
 
-# Run tests
-npm test
+# Install shared library (local development)
+npm install ../dh-reporting-shared
 
-# Build the library
-npm run build
+# Start the development server
+npx expo start
 ```
+
+### Running on Devices
+
+```bash
+# iOS Simulator (macOS only)
+npx expo start --ios
+
+# Android Emulator  
+npx expo start --android
+
+# Physical device with Expo Go
+# Scan QR code from terminal with your phone
+npx expo start
+```
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── common/        # Shared components (Button, Input, Card)
+│   ├── forms/         # Form-specific components
+│   └── navigation/    # Navigation components
+├── screens/           # Application screens
+│   ├── auth/         # Authentication screens
+│   │   ├── SignInScreen.js
+│   │   ├── SignUpScreen.js
+│   │   └── OTPScreen.js
+│   └── main/         # Main app screens
+│       ├── DashboardScreen.js
+│       ├── TimeEntryScreen.js
+│       └── ProfileScreen.js
+├── services/          # Business logic and API calls
+│   ├── authService.js
+│   ├── projectService.js
+│   ├── timeEntryService.js
+│   └── syncService.js
+├── database/          # Local SQLite database
+│   ├── database.js
+│   ├── migrations/
+│   ├── services/
+│   └── seeds/
+├── stores/           # Zustand state management
+│   ├── authStore.js
+│   ├── projectStore.js
+│   └── appStore.js
+├── navigation/       # Navigation configuration
+│   ├── AppNavigator.js
+│   ├── AuthNavigator.js
+│   └── MainNavigator.js
+├── styles/           # Styling and themes
+│   ├── theme.js
+│   ├── globalStyles.js
+│   └── colors.js
+├── utils/            # Utility functions
+│   ├── storage.js
+│   ├── dateHelpers.js
+│   └── validators.js
+├── constants/        # App constants
+│   ├── config.js
+│   ├── routes.js
+│   └── strings.js
+└── assets/           # Images, fonts, icons
+    ├── images/
+    ├── icons/
+    └── fonts/
+```
+
+## 🛠️ Technology Stack
+
+### Core Technologies
+- **React Native 0.72+** - Cross-platform mobile framework
+- **Expo ~49.0** - Development platform and toolkit
+- **JavaScript ES6+** - Programming language
+
+### Navigation & State
+- **React Navigation 6** - Screen routing and navigation
+- **Zustand** - Lightweight state management
+- **React Query** - Server state and caching
+
+### Database & Storage
+- **SQLite** (Expo SQLite) - Local database
+- **AsyncStorage** - Key-value storage
+- **Expo SecureStore** - Secure credential storage
+
+### UI & Interaction
+- **React Native Safe Area Context** - Safe area handling
+- **React Native Gesture Handler** - Touch gestures
+- **React Native SVG** - Vector graphics and charts
+- **Expo Vector Icons** - Icon library
+
+### Development Tools
+- **Jest** - Testing framework
+- **ESLint + Prettier** - Code quality
+- **React Native Testing Library** - Component testing
+
+## 🔧 Development
+
+### Environment Setup
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Set up environment variables**:
+   ```bash
+   # Copy environment template
+   cp .env.example .env.local
+   
+   # Edit .env.local with your configuration
+   ```
+
+3. **Initialize database**:
+   ```bash
+   # Database will be created automatically on first run
+   # Sample data will be seeded in development mode
+   ```
 
 ### Development Workflow
 
-1. **Make changes** to source files in `src/`
-2. **Add tests** for new functionality
-3. **Run tests** to ensure everything works: `npm test`
-4. **Update version** in package.json if needed
-5. **Commit changes** with descriptive commit messages
-6. **Push to repository**
+```bash
+# Start development server
+npm start
 
-### Testing
+# Start with specific platform
+npm run ios        # iOS simulator
+npm run android    # Android emulator
+npm run web        # Web browser (for testing)
+
+# Run tests
+npm test           # Run all tests
+npm run test:watch # Run tests in watch mode
+
+# Code quality
+npm run lint       # ESLint checking
+npm run format     # Prettier formatting
+```
+
+### Building the App
 
 ```bash
-# Run all tests
+# Development build
+npx eas build --profile development --platform all
+
+# Production build  
+npx eas build --profile production --platform all
+
+# Local build (for testing)
+npx expo run:ios
+npx expo run:android
+```
+
+## 📊 Development Phases
+
+### Phase 1: Offline Mobile (Current)
+- ✅ Local SQLite database
+- ✅ Mock authentication system
+- ✅ Complete offline functionality
+- ✅ Time tracking and project management
+
+### Phase 2: Cloud Integration (Next)
+- 🔄 AWS Cognito authentication
+- 🔄 Real email OTP delivery
+- 🔄 Cloud API integration
+- 🔄 Data synchronization
+
+### Phase 3: Production (Future)
+- 📱 App Store deployment
+- 📊 Analytics and monitoring
+- 🔔 Push notifications
+- 🌐 Multi-language support
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Unit tests
 npm test
 
-# Run tests in watch mode
-npm run test:watch
+# Component tests
+npm run test:components
 
-# Run tests with coverage
-npm run test:coverage
+# Integration tests  
+npm run test:integration
+
+# E2E tests (when available)
+npm run test:e2e
 ```
 
-## 📦 Usage in Projects
+### Testing Strategy
 
-### Mobile App (dh-reporting-mobile)
+- **Unit Tests**: Individual functions and utilities
+- **Component Tests**: React Native components
+- **Integration Tests**: Database operations and services
+- **Manual Testing**: User flows on physical devices
 
+## 📱 Device Support
+
+### iOS
+- **Minimum**: iOS 12.0+
+- **Recommended**: iOS 15.0+
+- **Devices**: iPhone 8 and newer
+
+### Android
+- **Minimum**: Android API 21 (5.0)
+- **Recommended**: Android API 28+ (9.0+)
+- **Devices**: Most Android devices from 2016+
+
+## 🔐 Security Features
+
+- **Biometric Authentication**: Touch ID / Face ID support
+- **Secure Storage**: Encrypted credential storage
+- **Data Encryption**: Local data encryption
+- **OTP Verification**: Email-based authentication
+- **Offline Security**: Local data protection
+
+## 🌐 Environment Configuration
+
+### Development
 ```javascript
-// In React Native components
-import { validateEmail, formatWorkHours } from '@dh-reporting/shared';
-
-const SignUpScreen = () => {
-  const handleEmailChange = (email) => {
-    const isValid = validateEmail(email);
-    // Handle validation result
-  };
-};
+// Local SQLite database
+// Mock authentication
+// Debug logging enabled
+// Hot reload enabled
 ```
 
-### Web App (dh-reporting-web)
-
+### Production
 ```javascript
-// In React components
-import { calculateOvertime, getProjectProgress } from '@dh-reporting/shared';
-
-const ProjectDashboard = () => {
-  const progress = getProjectProgress(timeEntries, allocatedHours);
-  // Display progress
-};
+// AWS cloud services
+// Real authentication
+// Analytics enabled
+// Optimized performance
 ```
 
-## 🔄 Version Management
+## 📋 Scripts
 
-This library follows [Semantic Versioning](https://semver.org/):
+```json
+{
+  "start": "expo start",
+  "ios": "expo start --ios", 
+  "android": "expo start --android",
+  "web": "expo start --web",
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "lint": "eslint src/ --ext .js,.jsx",
+  "format": "prettier --write 'src/**/*.{js,jsx,json}'",
+  "build:ios": "eas build --platform ios",
+  "build:android": "eas build --platform android"
+}
+```
 
-- **MAJOR** version for incompatible API changes
-- **MINOR** version for backwards-compatible functionality additions  
-- **PATCH** version for backwards-compatible bug fixes
+## 🐛 Troubleshooting
 
-### Updating Consuming Apps
+### Common Issues
 
-When updating the shared library:
-
+**Metro bundler issues:**
 ```bash
-# In mobile app
-cd ../dh-reporting-mobile
-npm install ../dh-reporting-shared
-
-# In web app  
-cd ../dh-reporting-web
-npm install ../dh-reporting-shared
+npx expo start --clear
 ```
 
-## 🧪 Testing Strategy
+**iOS simulator not starting:**
+```bash
+# Reset iOS simulator
+npx expo start --ios --clear
+```
 
-- **Unit tests** for all validation functions
-- **Integration tests** for business logic
-- **Mock data generators** for testing consuming applications
-- **Type checking** for TypeScript compatibility
+**Android emulator issues:**
+```bash
+# Start Android emulator manually from Android Studio
+# Then run: npx expo start --android
+```
 
-## 📋 Contributing
+**Dependencies issues:**
+```bash
+# Clear node modules and reinstall
+rm -rf node_modules
+npm install
+```
 
-1. **Create a feature branch** from `develop`
-2. **Make your changes** with appropriate tests
-3. **Ensure all tests pass**
-4. **Update documentation** if needed
-5. **Create a pull request** to `develop`
-6. **Wait for code review** and approval
+### Performance Issues
+
+- **Check bundle size**: Use `npx expo build:web` to analyze
+- **Optimize images**: Use WebP format for better compression
+- **Database queries**: Monitor SQLite query performance
+- **Memory usage**: Use React DevTools for profiling
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make changes** with appropriate tests
+4. **Run tests**: `npm test`
+5. **Commit changes**: `git commit -m 'Add amazing feature'`
+6. **Push to branch**: `git push origin feature/amazing-feature`
+7. **Create Pull Request**
+
+### Code Standards
+
+- Follow **ESLint** configuration
+- Use **Prettier** for formatting
+- Write **tests** for new features
+- Update **documentation** as needed
+- Use **conventional commits**
 
 ## 📄 License
 
@@ -234,17 +349,25 @@ Private - Internal company use only
 
 ## 🔗 Related Repositories
 
-- [dh-reporting-mobile](../dh-reporting-mobile) - React Native mobile app
-- [dh-reporting-web](../dh-reporting-web) - React web dashboard
+- [dh-reporting-shared](../dh-reporting-shared) - Shared utility library
+- [dh-reporting-web](../dh-reporting-web) - Web dashboard (future)
 
 ## 📞 Support
 
-For questions or issues related to the shared library:
+For technical support or questions:
 
-1. **Check existing issues** in the repository
-2. **Create a new issue** with detailed description
-3. **Contact the development team** for urgent matters
+1. **Check documentation** and troubleshooting guide
+2. **Search existing issues** in the repository  
+3. **Create new issue** with detailed description
+4. **Contact development team** for urgent matters
+
+## 🎯 Roadmap
+
+- ✅ **Q1 2024**: Offline mobile app with local database
+- 🔄 **Q2 2024**: Cloud integration and real-time sync
+- 📱 **Q3 2024**: App Store deployment and production launch
+- 🌐 **Q4 2024**: Web dashboard and advanced analytics
 
 ---
 
-**Built with ❤️ for the DH-Reporting time tracking system**
+**Built with ❤️ using React Native and Expo**
