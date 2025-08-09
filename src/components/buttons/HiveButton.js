@@ -1,150 +1,186 @@
-// src/components/HiveButton.js
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 
-export default function HiveButton({ projectId, projectName, location, onStart, onEnd }) {
-  const [status, setStatus] = useState('idle'); // idle | started | ended
-  const [startedAt, setStartedAt] = useState(null);
-  const [endedAt, setEndedAt] = useState(null);
-  const tick = useRef(null); // interval id
-  const [forceUpdate, setForceUpdate] = useState(0); // re-render trigger for the timer
-  const componentId = useRef(Math.random().toString(36).substr(2, 9)); // unique ID for debugging
+const HiveButton = ({ 
+  projectId, 
+  projectName, 
+  location, 
+  onStart, 
+  onEnd, 
+  isActive,
+  isDisabled, // NEW: disable when other buttons are active
+  elapsedTime,
+  width = "100%", 
+  height = 80 
+}) => {
+  const [internalStatus, setInternalStatus] = useState('idle');
 
-  // start/stop ticking when status changes
+  // Sync internal status with parent's isActive prop
   useEffect(() => {
-    // Clear any existing interval first
-    if (tick.current) {
-      clearInterval(tick.current);
-      tick.current = null;
+    if (isActive && internalStatus !== 'started') {
+      setInternalStatus('started');
+    } else if (!isActive && internalStatus === 'started') {
+      setInternalStatus('idle');
+    }
+  }, [isActive]);
+
+  const handlePress = useCallback(async () => {
+    // Don't allow press if disabled or in transition
+    if (isDisabled || internalStatus === 'starting' || internalStatus === 'ending') {
+      return;
     }
 
-    if (status === 'started') {
-      // tick every second for smooth minute rollover
-      tick.current = setInterval(() => {
-        setForceUpdate(n => n + 1);
-      }, 1000);
-    }
-
-    return () => {
-      if (tick.current) {
-        clearInterval(tick.current);
-        tick.current = null;
-      }
-    };
-  }, [status]);
-
-  const handlePress = () => {
     const now = new Date();
-    console.log(`[${componentId.current}] Button pressed, current status:`, status);
-
-    if (status === 'idle' || status === 'ended') {
-      console.log(`[${componentId.current}] Starting timer`);
-      setStatus('started');
-      setStartedAt(now);
-      setEndedAt(null);
-      onStart?.({ projectId, location, startAt: now });
-    } else if (status === 'started') {
-      console.log(`[${componentId.current}] Ending timer`);
-      setStatus('ended');
-      setEndedAt(now);
-      onEnd?.({ projectId, location, startAt: startedAt, endAt: now });
+    
+    console.log(`[Button] ${projectName} (${location}) pressed, isActive: ${isActive}, isDisabled: ${isDisabled}`);
+    
+    if (isActive) {
+      // End the current session - don't calculate startAt, let parent handle it
+      setInternalStatus('ending');
+      try {
+        await onEnd({
+          projectId,
+          location,
+          endAt: now
+          // Remove startAt - the parent has the real start time from database
+        });
+        setInternalStatus('idle');
+      } catch (error) {
+        console.error('Error ending session:', error);
+        setInternalStatus('started'); // Revert on error
+      }
+    } else {
+      // Start a new session
+      setInternalStatus('starting');
+      try {
+        await onStart({
+          projectId,
+          location,
+          startAt: now
+        });
+        setInternalStatus('started');
+      } catch (error) {
+        console.error('Error starting session:', error);
+        setInternalStatus('idle'); // Revert on error
+      }
     }
+  }, [isActive, isDisabled, projectId, location, projectName, onStart, onEnd, internalStatus]);
+
+  // Helper function to parse elapsed time string to seconds
+  const parseElapsedTime = (timeString) => {
+    if (!timeString) return 0;
+    const [hours, minutes, seconds] = timeString.split(':').map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
   };
 
   const getButtonStyle = () => {
-    switch (status) {
-      case 'started':
-        return styles.btnStarted; // Green
-      case 'ended':
-        return styles.btnEnded;   // Gold
-      default:
-        return styles.btnIdle;    // Teal
+    const baseStyle = [styles.button, { width, height }];
+    
+    if (isDisabled) {
+      return [...baseStyle, styles.disabledButton];
     }
+    
+    if (isActive) {
+      return [...baseStyle, styles.activeButton];
+    }
+    
+    return baseStyle;
   };
 
-  // format ms → MM:SS or HH:MM:SS if over an hour
-  const formatTime = (ms) => {
-    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
-
-    if (hours > 0) {
-      return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
-    } else {
-      return `${pad(mins)}:${pad(secs)}`;
-    }
+  const getButtonText = () => {
+    if (internalStatus === 'starting') return 'Starting...';
+    if (internalStatus === 'ending') return 'Ending...';
+    if (isActive && elapsedTime) return elapsedTime;
+    return location;
   };
 
-  // compute elapsed from start→now (if running) or start→end (if ended)
-  const elapsed = useMemo(() => {
-    if (!startedAt) return null;
-    const end = status === 'started' ? new Date() : endedAt ?? new Date();
-    const diff = end.getTime() - startedAt.getTime();
-    console.log(`Timer calc [${componentId.current}] ${projectName}:`, { startedAt, end, diff, formatted: formatTime(diff), status });
-    return formatTime(diff);
-  }, [status === 'started' ? forceUpdate : 0, startedAt, endedAt, status, projectName, componentId]);
+  const getTextStyle = () => {
+    if (isDisabled) {
+      return styles.disabledText;
+    }
+    if (isActive) {
+      return styles.activeText;
+    }
+    return styles.locationText;
+  };
+
+  const getProjectNameStyle = () => {
+    if (isDisabled) {
+      return [styles.projectName, styles.disabledText];
+    }
+    if (isActive) {
+      return [styles.projectName, styles.activeText];
+    }
+    return styles.projectName;
+  };
 
   return (
-    <Pressable onPress={handlePress} style={[styles.btn, getButtonStyle()]}>
-      <Text style={styles.txt}>{projectName}</Text>
-      <Text style={styles.txtSmall}>{location}</Text>
-      {startedAt && (
-        <Text style={styles.timer}>
-          {elapsed}
+    <TouchableOpacity
+      style={getButtonStyle()}
+      onPress={handlePress}
+      disabled={isDisabled || internalStatus === 'starting' || internalStatus === 'ending'}
+      activeOpacity={isDisabled ? 1 : 0.7}
+    >
+      <View style={styles.content}>
+        <Text style={getProjectNameStyle()} numberOfLines={1}>
+          {projectName}
         </Text>
-      )}
-    </Pressable>
+        <Text style={getTextStyle()} numberOfLines={1}>
+          {getButtonText()}
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  btn: {
-    paddingVertical: appStyleConstants.SIZE_8,
-    paddingHorizontal: appStyleConstants.SIZE_12,
+  button: {
+    backgroundColor: appStyleConstants.COLOR_SURFACE,
     borderRadius: appStyleConstants.SIZE_8,
-    borderWidth: 1,
-    margin: appStyleConstants.SIZE_4,
-    minWidth: 90,
+    padding: appStyleConstants.SIZE_8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: appStyleConstants.COLOR_BORDER,
+    ...appStyleConstants.SHADOW_BOX_2,
+  },
+  activeButton: {
+    backgroundColor: appStyleConstants.COLOR_TIMER_ACTIVE,
+    borderColor: appStyleConstants.COLOR_SECONDARY,
+  },
+  disabledButton: {
+    backgroundColor: appStyleConstants.COLOR_DARK,
+    borderColor: appStyleConstants.COLOR_MUTED,
+    opacity: 0.5,
+  },
+  content: {
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
-  // Idle → Teal
-  btnIdle: {
-    backgroundColor: appStyleConstants.COLOR_PRIMARY,
-    borderColor: appStyleConstants.COLOR_PRIMARY,
-  },
-  // Started → Green
-  btnStarted: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
-  },
-  // Ended → Gold
-  btnEnded: {
-    backgroundColor: '#FF8C42',
-    borderColor: '#FF8C42',
-  },
-  txt: {
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
-    fontSize: appStyleConstants.FONT_CAPTION,
+  projectName: {
+    ...appStyleConstants.STYLE_CAPTION,
     fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-    color: appStyleConstants.COLOR_WHITE,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
     textAlign: 'center',
+    marginBottom: appStyleConstants.SIZE_4,
   },
-  txtSmall: {
+  locationText: {
+    fontSize: appStyleConstants.FONT_SIZE_12,
     fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
-    fontSize: appStyleConstants.FONT_SIZE_12 - 2, // 10px
     fontWeight: appStyleConstants.FONT_WEIGHT_REGULAR,
-    color: appStyleConstants.COLOR_WHITE,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
     textAlign: 'center',
   },
-  timer: {
-    marginTop: appStyleConstants.SIZE_4 / 2, // 2px
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
-    fontSize: appStyleConstants.FONT_SIZE_12 - 2, // 10px
-    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+  activeText: {
     color: appStyleConstants.COLOR_WHITE,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+  },
+  disabledText: {
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    opacity: 0.7,
   },
 });
+
+export default HiveButton;
