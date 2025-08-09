@@ -133,41 +133,25 @@ const ProjectsScreen = ({ navigation }) => {
    */
   const loadProjects = async () => {
     try {
-      let projectList = await getAllProjects();
+      const projectList = await getAllProjects();
 
-      // If no projects exist, create some sample ones
-      if (projectList.length === 0) {
-        console.log('📝 Creating sample projects...');
-        await createSampleProjects();
-        projectList = await getAllProjects();
+      if (!projectList || projectList.length === 0) {
+        console.log('⚠️ No projects found in database');
+        Alert.alert(
+          'No Projects Found',
+          'No projects are available. Please add projects through the admin panel or database.',
+          [{ text: 'OK' }]
+        );
+        setProjects([]);
+        return;
       }
 
       setProjects(projectList);
       console.log(`✅ Loaded ${projectList.length} projects`);
     } catch (error) {
       console.error('❌ Error loading projects:', error);
-    }
-  };
-
-  /**
-   * Create sample projects for testing
-   */
-  const createSampleProjects = async () => {
-    const sampleProjects = [
-      { name: 'Website Development', location: LOCATION.HOME, description: 'Client website project' },
-      { name: 'Mobile App', location: LOCATION.OFFICE, description: 'iOS/Android app' },
-      { name: 'Database Migration', location: LOCATION.WORK, description: 'SQL database updates' },
-      { name: 'Code Review', location: LOCATION.HOME, description: 'Review team code' },
-      { name: 'Client Meeting', location: LOCATION.OFFICE, description: 'Project planning' },
-      { name: 'Documentation', location: LOCATION.WORK, description: 'Technical docs' }
-    ];
-
-    for (const project of sampleProjects) {
-      try {
-        await createProject(project);
-      } catch (error) {
-        console.log('⚠️ Project might already exist:', project.name);
-      }
+      Alert.alert('Error', 'Failed to load projects. Please try again.');
+      setProjects([]);
     }
   };
 
@@ -412,17 +396,6 @@ const ProjectsScreen = ({ navigation }) => {
 
                 // Disable button if there's an active session and it's not this specific button
                 const isDisabled = hasActiveSession && !isActiveForThisButton;
-
-                console.log(`🔍 Project ${project.id} (${project.name}) - Location: ${location.name}:`, {
-                  activeSession: activeSession?.id,
-                  activeProjectId: activeSession?.project_id,
-                  activeLocation: activeSession?.active_location,
-                  isActive: isActiveForThisButton,
-                  isDisabled,
-                  elapsedTime,
-                  hasActiveSession,
-                  sessionStartTime: activeSession?.start_work_time || activeSession?.start_time
-                });
 
                 return (
                   <View key={`${project.id}-${location.id}`} style={styles.buttonContainer}>
