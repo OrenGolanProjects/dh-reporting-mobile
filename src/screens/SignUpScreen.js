@@ -1,6 +1,5 @@
-// src/screens/SignUpScreen.js
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
 import InputField from '../components/InputField';
@@ -8,11 +7,14 @@ import EmailField from '../components/fields/EmailField';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { validateEmail } from '../utils/validation';
+// Import our database functions
+import { createUser, setCurrentUser, getUserByEmail } from '../database';
 
 const SignUpScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName,  setLastName]  = useState('');
   const [email,     setEmail]     = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const firstRef = useRef(null);
   const lastRef  = useRef(null);
@@ -20,21 +22,76 @@ const SignUpScreen = ({ navigation }) => {
 
   const trimmedFirst = firstName.trim();
   const trimmedLast  = lastName.trim();
-  const trimmedEmail = email.trim();
+  const trimmedEmail = email.trim().toLowerCase();
 
   const isEmailValid = validateEmail(trimmedEmail);
-  const canSubmit = !!trimmedFirst && !!trimmedLast && isEmailValid;
+  const canSubmit = !!trimmedFirst && !!trimmedLast && isEmailValid && !isLoading;
 
   const goToSignIn = () => navigation.navigate('Signin');
 
-  const handleSignUp = () => {
-    if (!canSubmit) return console.warn('Please fill all fields correctly');
-    console.log('Register user:', {
-      email: trimmedEmail,
-      firstName: trimmedFirst,
-      lastName: trimmedLast,
-    });
-    // TODO: call signup API / start OTP
+  /**
+   * Handle user signup with database integration
+   */
+  const handleSignUp = async () => {
+    if (!canSubmit) {
+      return console.warn('Please fill all fields correctly');
+    }
+
+    setIsLoading(true);
+    
+    try {
+      console.log('🔄 Creating user account...');
+      
+      // Check if user already exists
+      const existingUser = await getUserByEmail(trimmedEmail);
+      if (existingUser) {
+        Alert.alert(
+          'Account Exists', 
+          'An account with this email already exists. Please sign in instead.',
+          [
+            { text: 'OK' },
+            { text: 'Go to Sign In', onPress: goToSignIn }
+          ]
+        );
+        return;
+      }
+
+      // Create new user in database
+      const newUser = await createUser({
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        email: trimmedEmail
+      });
+
+      console.log('✅ User created successfully:', newUser.email);
+
+      // Automatically log them in
+      await setCurrentUser(newUser.id);
+      console.log('✅ User logged in automatically');
+
+      // Show success message
+      Alert.alert(
+        'Account Created!', 
+        `Welcome ${trimmedFirst}! Your account has been created successfully.`,
+        [
+          { 
+            text: 'Continue', 
+            onPress: () => navigation.replace('Projects')
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      
+      Alert.alert(
+        'Signup Failed',
+        'Something went wrong while creating your account. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,7 +101,7 @@ const SignUpScreen = ({ navigation }) => {
       card
       center
       keyboard
-      footer={<SecondaryButton title="Back to Sign-In" onPress={goToSignIn} />}
+      footer={<SecondaryButton title="Back to Sign-In" onPress={goToSignIn} disabled={isLoading} />}
     >
       <View style={styles.inputGroup}>
         <Text style={styles.label}>First Name</Text>
@@ -60,6 +117,7 @@ const SignUpScreen = ({ navigation }) => {
           blurOnSubmit={false}
           onSubmitEditing={() => lastRef.current?.focus()}
           autoFocus
+          editable={!isLoading}
         />
       </View>
 
@@ -76,6 +134,7 @@ const SignUpScreen = ({ navigation }) => {
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => emailRef.current?.focus()}
+          editable={!isLoading}
         />
       </View>
 
@@ -88,15 +147,22 @@ const SignUpScreen = ({ navigation }) => {
           onChangeText={setEmail}
           returnKeyType="done"
           onSubmitEditing={handleSignUp}
+          editable={!isLoading}
         />
       </View>
 
       <PrimaryButton
-        title="Create Account"
+        title={isLoading ? "Creating Account..." : "Create Account"}
         onPress={handleSignUp}
         disabled={!canSubmit}
       />
-      <Text style={styles.helpText}>You'll receive an email with a login code.</Text>
+      
+      <Text style={styles.helpText}>
+        {isLoading 
+          ? "Please wait while we create your account..." 
+          : "You'll be logged in automatically after account creation."
+        }
+      </Text>
     </ScreenWrapper>
   );
 };
