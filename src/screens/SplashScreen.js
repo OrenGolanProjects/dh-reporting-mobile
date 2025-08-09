@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
-import PrimaryButton from '../components/PrimaryButton'; // adjust path if needed
+import PrimaryButton from '../components/buttons/PrimaryButton'; // adjust path if needed
 
 const SplashScreen = () => {
   const navigation = useNavigation();

@@ -12,9 +12,10 @@
     "sass:watch": "sass --watch src/styles:src/styles --style=compressed"
   },
   "dependencies": {
-    "@orenuki/dh-reporting-shared": "^1.0.7",
+    "@orenuki/dh-reporting-shared": "^1.0.8",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.4.5",
+    "@react-navigation/drawer": "^7.5.6",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.5",
     "@tanstack/react-query": "^5.83.0",
@@ -29,7 +30,8 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-netinfo": "^1.1.0",
-    "react-native-safe-area-context": "^5.4.0",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
     "react-native-sass-transformer": "^3.0.0",
     "react-native-screens": "~4.11.1",
     "zustand": "^5.0.7"
