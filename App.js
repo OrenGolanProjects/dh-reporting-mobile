@@ -2,30 +2,42 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import AppNavigator from './src/navigation/AppNavigator';
-import { initDatabase, runMigrations } from './src/database';
-// Remove this line: import { testMigrations } from './src/testDatabase';
+import { initDatabase, getDb, getLatestMigrationVersion, getAppliedMigrations } from './src/database';
 
 const App = () => {
   useEffect(() => {
     const setupDatabase = async () => {
       try {
         console.log('🔄 Setting up database...');
-
-        // Step 1: Open database connection
         await initDatabase();
-
-        // Step 2: Run any new migrations
-        await runMigrations();
-
-        // Remove this line: await testMigrations();
-
+        
+        // Check if running in development mode
+        const isDev = __DEV__;  // ← React Native built-in variable
+        
+        if (isDev) {
+          console.log('🛠️ DEVELOPMENT MODE - Showing debug info');
+          
+          // Only show migration status in development
+          const version = await getLatestMigrationVersion();
+          const applied = await getAppliedMigrations();
+          console.log("Version:", version, "Applied:", applied.length);
+          
+          // Only show tables in development
+          const db = await getDb();
+          const tables = await db.getAllAsync(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+          );
+          console.log('Tables:', tables.map(t => t.name));
+        } else {
+          console.log('🚀 PRODUCTION MODE - Debug info hidden');
+        }
+        
         console.log('✅ Database setup complete!');
       } catch (error) {
         console.error('❌ Database setup failed:', error);
       }
     };
 
-    // Run setup when app starts
     setupDatabase();
   }, []);
 
