@@ -1,7 +1,8 @@
 {
   "name": "dh-reporting-mobile",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -10,10 +11,10 @@
     "build:android": "expo build:android",
     "build:ios": "expo build:ios",
     "sass:watch": "sass --watch src/styles:src/styles --style=compressed",
-    "migration:create": "node src/scripts/migration.js create",
-    "migration:install": "node src/scripts/migration.js install", 
-    "migration:downgrade": "node src/scripts/migration.js downgrade",
-    "migration:status": "node src/scripts/migration.js status"
+    "migration:create": "node src/scripts/migration.cjs create",
+    "migration:install": "node src/scripts/migration.cjs install",
+    "migration:downgrade": "node src/scripts/migration.cjs downgrade",
+    "migration:status": "node src/scripts/migration.cjs status"
   },
   "dependencies": {
     "@orenuki/dh-reporting-shared": "^1.0.9",

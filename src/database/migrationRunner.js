@@ -91,23 +91,23 @@ export async function getLatestMigrationVersion() {
 export async function runMigrations() {
   try {
     console.log('🔄 Starting migration process...');
-    
+
     // Make sure migrations table exists
     await createMigrationsTable();
-    
+
     // Find out which migrations we've already done
     const appliedMigrations = await getAppliedMigrations();
     const appliedVersions = appliedMigrations.map(m => m.version);
-    
+
     const db = await getDb();
-    
+
     // FIXED: Use static imports instead of dynamic imports
     let migrationsRun = 0;
-    
+
     // Migration 1: Create initial tables
     if (!appliedVersions.includes(1)) {
       console.log('🔄 Running migration 1_create_initial_tables...');
-      
+
       const migration1SQL = `
 PRAGMA foreign_keys = ON;
 
@@ -166,63 +166,35 @@ CREATE INDEX IF NOT EXISTS idx_work_hours_start_time ON work_hours(start_work_ti
 CREATE INDEX IF NOT EXISTS idx_projects_location ON projects(location);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       `;
-      
+
       await db.execAsync(migration1SQL);
       await recordMigration(1, 'create_initial_tables');
       migrationsRun++;
       console.log('✅ Migration 1_create_initial_tables completed');
     }
-    
+
     // Migration 2: Create migration tracking
     if (!appliedVersions.includes(2)) {
       console.log('🔄 Running migration 2_create_migration_tracking...');
-      
+
       const migration2SQL = `
 -- This migration is mostly redundant since we create the migrations table above
 -- But we'll add the record for migration 1 if it doesn't exist
 INSERT OR IGNORE INTO migrations (version, name, applied_at, status) 
 VALUES (1, 'create_initial_tables', strftime('%s', 'now') * 1000, 'applied');
       `;
-      
+
       await db.execAsync(migration2SQL);
       await recordMigration(2, 'create_migration_tracking');
       migrationsRun++;
       console.log('✅ Migration 2_create_migration_tracking completed');
     }
-    
-    // Migration 3: Add favorites table
-    if (!appliedVersions.includes(3)) {
-      console.log('🔄 Running migration 3_add_favorites_table...');
-      
-      const migration3SQL = `
--- Favorites table: tracks user favorite projects
-CREATE TABLE IF NOT EXISTS favorites (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  project_id INTEGER NOT NULL,
-  created_at INTEGER DEFAULT (strftime('%s', 'now') * 1000),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-  UNIQUE(user_id, project_id)
-);
-
--- Index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
-CREATE INDEX IF NOT EXISTS idx_favorites_project_id ON favorites(project_id);
-      `;
-      
-      await db.execAsync(migration3SQL);
-      await recordMigration(3, 'add_favorites_table');
-      migrationsRun++;
-      console.log('✅ Migration 3_add_favorites_table completed');
-    }
-    
     if (migrationsRun === 0) {
       console.log('ℹ️ No pending migrations to run');
     } else {
       console.log(`✅ ${migrationsRun} migrations completed successfully`);
     }
-    
+
   } catch (error) {
     console.error('❌ Error running migrations:', error);
     throw error;
@@ -236,28 +208,19 @@ CREATE INDEX IF NOT EXISTS idx_favorites_project_id ON favorites(project_id);
 export async function downgradeTo(targetVersion) {
   try {
     console.log(`🔄 Downgrading to version ${targetVersion}...`);
-    
+
     // Find migrations to undo (newer than target version)
     const appliedMigrations = await getAppliedMigrations();
     const migrationsToReverse = appliedMigrations
       .filter(m => m.version > targetVersion)
       .sort((a, b) => b.version - a.version); // Newest first
-    
+
     const db = await getDb();
-    
+
     // FIXED: Use static SQL instead of dynamic imports
     for (const appliedMigration of migrationsToReverse) {
       console.log(`🔄 Reversing migration ${appliedMigration.version}_${appliedMigration.name}...`);
-      
-      if (appliedMigration.version === 3) {
-        // Migration 3 down: Remove favorites table
-        const down3SQL = `
-DROP INDEX IF EXISTS idx_favorites_project_id;
-DROP INDEX IF EXISTS idx_favorites_user_id;
-DROP TABLE IF EXISTS favorites;
-        `;
-        await db.execAsync(down3SQL);
-      } else if (appliedMigration.version === 2) {
+      if (appliedMigration.version === 2) {
         // Migration 2 down: Just remove the record
         // (migrations table should stay since it's needed)
       } else if (appliedMigration.version === 1) {
@@ -278,14 +241,14 @@ DROP TABLE IF EXISTS users;
         `;
         await db.execAsync(down1SQL);
       }
-      
+
       // Remove the migration record
       await removeMigrationRecord(appliedMigration.version);
       console.log(`✅ Migration ${appliedMigration.version}_${appliedMigration.name} reversed`);
     }
-    
+
     console.log(`✅ Downgrade to version ${targetVersion} completed`);
-    
+
   } catch (error) {
     console.error('❌ Error during downgrade:', error);
     throw error;
