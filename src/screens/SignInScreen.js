@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
 import EmailField from '../components/fields/EmailField';
@@ -12,7 +12,7 @@ import { getUserByEmail, setCurrentUser } from '../database';
 const SignInScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const trimmed = email.trim().toLowerCase();
   const isValid = validateEmail(trimmed);
   const canSubmit = isValid && !isLoading;
@@ -34,13 +34,13 @@ const SignInScreen = ({ navigation }) => {
 
     try {
       console.log('🔍 Looking for user:', trimmed);
-      
+
       // Check if user exists in database
       const user = await getUserByEmail(trimmed);
-      
+
       if (user) {
         console.log('✅ User found:', user.email);
-        
+
         // In a real app, you'd send an OTP here
         // For this example, we'll just log them in directly
         Alert.alert(
@@ -66,7 +66,7 @@ const SignInScreen = ({ navigation }) => {
             }
           ]
         );
-        
+
       } else {
         console.log('❌ User not found');
         Alert.alert(
@@ -78,7 +78,7 @@ const SignInScreen = ({ navigation }) => {
           ]
         );
       }
-      
+
     } catch (error) {
       console.error('❌ Sign in error:', error);
       Alert.alert(
@@ -111,37 +111,53 @@ const SignInScreen = ({ navigation }) => {
         editable={!isLoading}
       />
 
-      <PrimaryButton
-        title={isLoading ? "Checking..." : "Send Code"}
-        onPress={handleSendCode}
-        disabled={!canSubmit}
-        style={{ marginTop: appStyleConstants.SIZE_12 }}
-      />
+      <View style={styles.buttonContainer}>
+        <PrimaryButton
+          title={isLoading ? "Checking..." : "Send Code"}
+          onPress={handleSendCode}
+          disabled={!canSubmit}
+          style={styles.fullWidthBtn}
+        />
 
-      <Text style={styles.helpText}>
-        {isLoading 
-          ? "Checking if your account exists..." 
-          : "We'll check if you have an account and help you sign in"
-        }
-      </Text>
+        <Text style={styles.helpText}>
+          {isLoading
+            ? "Checking if your account exists..."
+            : "We'll check if you have an account and help you sign in"
+          }
+        </Text>
 
-      <SecondaryButton
-        title="Create New Account"
-        onPress={goToSignUp}
-        style={{ marginTop: appStyleConstants.SIZE_12 }}
-        disabled={isLoading}
-      />
+        <SecondaryButton
+          title="Create New Account"
+          onPress={goToSignUp}
+          disabled={isLoading}
+          style={[styles.fullWidthBtn, styles.secondaryBtn]}
+        />
+      </View>
+
+
     </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    marginTop: appStyleConstants.SIZE_24,
+    width: '100%',
+  },
+  fullWidthBtn: {
+    width: '100%',
+    marginVertical: appStyleConstants.SIZE_8,
+  },
   helpText: {
     ...appStyleConstants.STYLE_CAPTION,
     textAlign: 'center',
-    marginTop: appStyleConstants.SIZE_16,
+    marginTop: appStyleConstants.SIZE_56,
     color: appStyleConstants.COLOR_TEXT_MUTED,
   },
+  secondaryBtn: {
+    marginTop: appStyleConstants.SIZE_4,
+  },
 });
+
 
 export default SignInScreen;
