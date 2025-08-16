@@ -28,6 +28,7 @@
     "expo-secure-store": "~14.2.3",
     "expo-sqlite": "~15.2.14",
     "expo-status-bar": "~2.2.3",
+    "knex": "^3.1.0",
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-async-storage": "^0.0.1",
