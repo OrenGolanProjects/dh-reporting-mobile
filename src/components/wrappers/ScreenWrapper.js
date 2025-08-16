@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
     paddingVertical: appStyleConstants.SIZE_16,
     borderBottomWidth: 1,
     borderBottomColor: appStyleConstants.COLOR_BORDER,
+    marginBottom: appStyleConstants.SIZE_16,
   },
   headerTitle: {
     fontSize: appStyleConstants.FONT_SIZE_24,

@@ -25,7 +25,7 @@ const ProjectsScreen = ({ navigation, route }) => {
 
   const [selectedProject, setSelectedProject] = useState(null);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
-  const [viewMode, setViewMode] = useState('gallery');
+  const [viewMode, setViewMode] = useState('list');
 
   const handleProjectPress = (project) => {
     setSelectedProject(project);
