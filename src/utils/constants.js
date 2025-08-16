@@ -1,7 +1,7 @@
 export const LOCATION = {
-  HOME: 1,    // Working from home
-  WORK: 2,    // Main office
-  OFFICE: 3   // Client office
+  HOME: 'HOME',
+  OFFICE: 'OFFICE', 
+  CLIENT: 'CLIENT'
 };
 
 export const LOCATION_NAMES = {
@@ -15,3 +15,4 @@ export const MIGRATION_STATUS = {
   APPLIED: 'applied',   // Successfully completed
   FAILED: 'failed'      // Something went wrong
 };
+

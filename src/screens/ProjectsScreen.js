@@ -1,310 +1,121 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Alert, Text } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
 import PrimaryButton from '../components/buttons/PrimaryButton';
-import HiveButton from '../components/buttons/HiveButton';
-import {
-  getCurrentUser,
-  clearCurrentUser,
-  getAllProjects,
-  createProject,
-  startWorkSession,
-  endWorkSession,
-  getActiveWorkSession
-} from '../database';
-import { LOCATION, LOCATION_NAMES } from '../utils/constants';
 import SecondaryButton from '../components/buttons/SecondaryButton';
-
-// Convert location numbers to names for display
-const LOCATIONS = [
-  { id: LOCATION.HOME, name: LOCATION_NAMES[LOCATION.HOME] },
-  { id: LOCATION.WORK, name: LOCATION_NAMES[LOCATION.WORK] },
-  { id: LOCATION.OFFICE, name: LOCATION_NAMES[LOCATION.OFFICE] }
-];
+import { useWorkSession } from '../hooks/useWorkSession';
+import { ActiveSessionCard } from '../components/ActiveSessionCard';
+import { ViewToggle } from '../components/ViewToggle';
+import { LocationModal } from '../components/LocationModal';
+import { ProjectGalleryView } from '../components/ProjectGalleryView';
+import { ProjectListView } from '../components/ProjectListView';
+import { Session, WorkSession } from '../orm/models';
 
 const ProjectsScreen = ({ navigation, route }) => {
-  const [projects, setProjects] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [activeSession, setActiveSession] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const {
+    projects,
+    currentUser,
+    activeSession,
+    isLoading,
+    startNewSession,
+    endSession,
+    handleSessionSwitch
+  } = useWorkSession(navigation);
 
-  // Timer for updating elapsed time display
-  useEffect(() => {
-    let interval;
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showLocationMenu, setShowLocationMenu] = useState(false);
+  const [viewMode, setViewMode] = useState('gallery');
+
+  const handleProjectPress = (project) => {
+    setSelectedProject(project);
+    setShowLocationMenu(true);
+  };
+
+  const handleLocationSelect = async (locationName) => {
+    const now = new Date();
+
     if (activeSession) {
-      interval = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeSession]);
+      const sameProject = activeSession.project_id === selectedProject.id;
+      const sameLocation = sameProject && activeSession.active_location === locationName;
 
-  /**
-   * Calculate elapsed time for active session
-   */
-  const getElapsedTime = () => {
-    if (!activeSession) {
-      return null;
-    }
-
-    const startTimeValue = activeSession.start_work_time || activeSession.start_time;
-
-    if (!startTimeValue) {
-      return null;
-    }
-
-    const startTime = new Date(startTimeValue).getTime();
-    const elapsed = currentTime - startTime;
-
-    // Ensure positive elapsed time
-    if (elapsed < 0) {
-      return "00:00:00";
-    }
-
-    const hours = Math.floor(elapsed / (1000 * 60 * 60));
-    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
-
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const userFromSplash = route.params?.user;
-
-  const loadInitialData = async () => {
-    try {
-      setIsLoading(true);
-
-      // Use passed user or fetch if not available
-      let user = userFromSplash;
-      if (!user) {
-        user = await getCurrentUser();
-        if (!user) {
-          navigation.replace('Signin');
-          return;
-        }
-      }
-      setCurrentUser(user);
-
-      // Load projects
-      await loadProjects();
-
-      // Check for active work session
-      const active = await getActiveWorkSession(user.id);
-      setActiveSession(active);
-
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      Alert.alert('Error', 'Failed to load data. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Load projects from database
-   */
-  const loadProjects = async () => {
-    try {
-      const projectList = await getAllProjects();
-
-      if (!projectList || projectList.length === 0) {
-        Alert.alert(
-          'No Projects Found',
-          'No projects are available. Please add projects through the admin panel or database.',
-          [{ text: 'OK' }]
-        );
-        setProjects([]);
+      if (sameProject && sameLocation) {
+        await endSession(now);
+        setShowLocationMenu(false);
+        setSelectedProject(null);
         return;
       }
 
-      setProjects(projectList);
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      Alert.alert('Error', 'Failed to load projects. Please try again.');
-      setProjects([]);
-    }
-  };
+      const targetLabel = sameProject
+        ? `${selectedProject.name} at ${locationName}`
+        : `${selectedProject.name} (${locationName})`;
 
-  /**
-   * Handle starting work on a project
-   */
-  const handleStart = useCallback(async ({ projectId, location, startAt }) => {
-    if (!currentUser) {
-      Alert.alert('Error', 'You must be logged in to track time');
-      return;
-    }
-
-    try {
-      // Check if user already has an active session
-      const existing = await getActiveWorkSession(currentUser.id);
-      if (existing) {
-        Alert.alert(
-          'Active Session Found',
-          `You're already working on "${existing.project_name}". End that session first?`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'End Previous & Start New',
-              onPress: async () => {
-                try {
-                  await endWorkSession(existing.id, Date.now());
-                  await startNewSession(projectId, location, startAt);
-                } catch (error) {
-                  console.error('Error switching sessions:', error);
-                  Alert.alert('Error', 'Failed to switch sessions. Please try again.');
-                }
-              }
-            }
-          ]
-        );
-        return;
-      }
-
-      await startNewSession(projectId, location, startAt);
-
-    } catch (error) {
-      console.error('Error starting work session:', error);
-      Alert.alert('Error', 'Failed to start work session. Please try again.');
-    }
-  }, [currentUser]);
-
-  /**
-   * Start a new work session
-   */
-  const startNewSession = async (projectId, location, startAt) => {
-    try {
-      const session = await startWorkSession({
-        projectId,
-        userId: currentUser.id,
-        startTime: startAt.getTime(),
-        notes: `Started via mobile app - ${location}`
-      });
-
-      // Get fresh session data with project info
-      const sessionWithProject = await getActiveWorkSession(currentUser.id);
-
-      // Store the specific location that was pressed
-      const sessionWithLocation = {
-        ...sessionWithProject,
-        active_location: location
-      };
-
-      setActiveSession(sessionWithLocation);
-      setCurrentTime(Date.now());
-
-      console.log('Work session started:', session.id);
-      Alert.alert('Work Started', `Time tracking has begun for ${location}!`);
-    } catch (error) {
-      console.error('Error in startNewSession:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Handle ending work on a project
-   */
-  const handleEnd = useCallback(async ({ projectId, location, endAt }) => {
-    if (!currentUser || !activeSession) {
-      Alert.alert('Error', 'No active work session found');
-      return;
-    }
-
-    try {
-      // Get the actual start time from the active session
-      const sessionStartTime = activeSession.start_work_time || activeSession.start_time;
-
-      if (!sessionStartTime) {
-        console.error('No session start time found');
-        Alert.alert('Error', 'Could not determine session start time');
-        return;
-      }
-
-      const updatedSession = await endWorkSession(
-        activeSession.id,
-        endAt.getTime(),
-        0, // break time - could be calculated or input by user
-        'Ended via mobile app'
-      );
-
-      // Calculate work duration using the session's actual start time from database
-      const endTimeMs = endAt.getTime();
-      const startTimeMs = Number(sessionStartTime);
-      const durationMs = endTimeMs - startTimeMs;
-      const durationMinutes = durationMs / (1000 * 60);
-      const durationHours = durationMs / (1000 * 60 * 60);
-
-      // Format for display - show minutes if less than 1 hour
-      const displayDuration = durationHours >= 1
-        ? `${durationHours.toFixed(2)} hours`
-        : `${durationMinutes.toFixed(1)} minutes`;
-
-      // Clear the active session
-      setActiveSession(null);
-      setCurrentTime(Date.now());
-
-      console.log('Work session ended:', updatedSession.id);
       Alert.alert(
-        'Work Completed',
-        `You worked for ${displayDuration} on "${activeSession.project_name}" at ${location}`
-      );
-
-    } catch (error) {
-      console.error('Error ending work session:', error);
-      Alert.alert('Error', 'Failed to end work session. Please try again.');
-    }
-  }, [currentUser, activeSession]);
-
-  /**
-   * Handle logout
-   */
-  const handleLogout = useCallback(async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            try {
-              // End any active session first
-              if (activeSession) {
-                await endWorkSession(activeSession.id, Date.now());
+        'Active Session',
+        `You're already working on "${activeSession.project_name}" at ${activeSession.active_location}. End it and start "${targetLabel}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'End & Start New',
+            onPress: async () => {
+              try {
+                await handleSessionSwitch(selectedProject.id, locationName, now);
+                setShowLocationMenu(false);
+                setSelectedProject(null);
+              } catch (error) {
+                console.error('Failed to switch sessions:', error);
               }
+            },
+          },
+        ],
+      );
+      return;
+    }
 
-              await clearCurrentUser();
-              navigation.replace('Signin');
-            } catch (error) {
-              console.error('Logout error:', error);
+    await startNewSession(selectedProject.id, locationName, now);
+    setShowLocationMenu(false);
+    setSelectedProject(null);
+  };
+
+  const handleLocationPressFromList = async (project, location, isEnding) => {
+    if (isEnding) {
+      await endSession(new Date());
+    } else {
+      setSelectedProject(project);
+      await handleLocationSelect(location.name);
+    }
+  };
+
+  const handleLogout = useCallback(async () => {
+    Alert.alert('Logout', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        onPress: async () => {
+          try {
+            if (activeSession) {
+              const session = await WorkSession.find(activeSession.id);
+              await session.update({
+                end_work_time: Date.now(),
+                notes: session.notes + ' | Ended due to logout'
+              });
             }
+            await Session.clear();
+            navigation.replace('Signin');
+          } catch (error) {
+            console.error('Error during logout:', error);
+            navigation.replace('Signin');
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   }, [navigation, activeSession]);
-
-  // Navigate back to splash (for testing)
-  const goToSplash = useCallback(() => {
-    navigation.navigate('Splash');
-  }, [navigation]);
 
   if (isLoading) {
     return (
-      <ScreenWrapper
-        headerTitle="DH-Reporting"
-        headerSubtitle="Loading..."
-        center
-      >
+      <ScreenWrapper headerTitle="DH-Reporting" headerSubtitle="Loading..." center>
         <View style={styles.loading}>
-          {/* You can add a loading spinner here */}
+          <Text style={styles.loadingText}>Loading projects…</Text>
         </View>
       </ScreenWrapper>
     );
@@ -312,101 +123,80 @@ const ProjectsScreen = ({ navigation, route }) => {
 
   return (
     <ScreenWrapper
-      headerTitle={`Welcome ${currentUser?.first_name || 'User'}`}
-      headerSubtitle={activeSession ? `Working on: ${activeSession.project_name}` : "Projects"}
+      headerTitle={`Welcome, ${currentUser?.first_name || 'User'}`}
+      headerSubtitle="Track your hour reports"
       scroll
       footer={
-        <View style={styles.footerButtons}>
+        <View style={styles.footer}>
+          <SecondaryButton title="Back to Splash" onPress={() => navigation.navigate('Splash')} />
           <PrimaryButton title="Logout" onPress={handleLogout} />
-          <SecondaryButton title="Back to Splash" onPress={goToSplash} />
         </View>
       }
     >
-      <View style={styles.projectsContainer}>
-        {projects.map((project) => (
-          <View key={project.id} style={styles.projectSection}>
-            {/* Location Buttons Row */}
-            <View style={styles.buttonsRow}>
-              {LOCATIONS.map((location) => {
-                // Check if this SPECIFIC button is active (project + location match)
-                const isActiveForThisButton = !!(activeSession &&
-                  activeSession.project_id === project.id &&
-                  activeSession.active_location === location.name);
+      <View style={styles.container}>
+        <ActiveSessionCard activeSession={activeSession} />
 
-                // Check if ANY session is active (for disabling other buttons)
-                const hasActiveSession = activeSession !== null;
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Your Projects</Text>
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        </View>
 
-                // Only show elapsed time for the active button
-                const elapsedTime = isActiveForThisButton ? getElapsedTime() : null;
-
-                // Disable button if there's an active session and it's not this specific button
-                const isDisabled = hasActiveSession && !isActiveForThisButton;
-
-                return (
-                  <View key={`${project.id}-${location.id}`} style={styles.buttonContainer}>
-                    <HiveButton
-                      projectId={project.id}
-                      projectName={project.name}
-                      location={location.name}
-                      onStart={handleStart}
-                      onEnd={handleEnd}
-                      isActive={isActiveForThisButton}
-                      isDisabled={isDisabled}
-                      elapsedTime={elapsedTime}
-                      width="100%"
-                      height={80}
-                    />
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        ))}
-
-        {projects.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No projects available</Text>
-          </View>
+        {viewMode === 'gallery' ? (
+          <ProjectGalleryView
+            projects={projects}
+            activeSession={activeSession}
+            onProjectPress={handleProjectPress}
+          />
+        ) : (
+          <ProjectListView
+            projects={projects}
+            activeSession={activeSession}
+            onLocationPress={handleLocationPressFromList}
+            onProjectPress={handleProjectPress}
+          />
         )}
+
+        <LocationModal
+          visible={showLocationMenu}
+          project={selectedProject}
+          onSelectLocation={handleLocationSelect}
+          onClose={() => {
+            setShowLocationMenu(false);
+            setSelectedProject(null);
+          }}
+        />
       </View>
     </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  projectsContainer: {
+  container: {
     flex: 1,
-  },
-  projectSection: {
-    marginBottom: appStyleConstants.SIZE_16,
-    paddingHorizontal: appStyleConstants.SIZE_4,
-  },
-  buttonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'stretch',
-    gap: appStyleConstants.SIZE_8,
-  },
-  buttonContainer: {
-    flex: 1,
-    maxWidth: 95,
-    height: 95,
+    paddingHorizontal: appStyleConstants.SIZE_16,
   },
   loading: {
-    padding: appStyleConstants.SIZE_32,
+    padding: appStyleConstants.SIZE_24,
   },
-  footerButtons: {
-    gap: appStyleConstants.SIZE_8,
-  },
-  emptyState: {
-    padding: appStyleConstants.SIZE_32,
-    alignItems: 'center',
-  },
-  emptyText: {
+  loadingText: {
     ...appStyleConstants.STYLE_BODY,
-    color: appStyleConstants.COLOR_TEXT_MUTED || '#CCCCCC',
-    textAlign: 'center',
-  }
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: appStyleConstants.SIZE_16,
+  },
+  sectionTitle: {
+    fontSize: appStyleConstants.FONT_SIZE_18,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: appStyleConstants.SIZE_12,
+  },
 });
 
 export default ProjectsScreen;

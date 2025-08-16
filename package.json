@@ -17,7 +17,7 @@
     "migration:status": "node src/scripts/migration.cjs status"
   },
   "dependencies": {
-    "@orenuki/dh-reporting-shared": "^1.0.9",
+    "@orenuki/dh-reporting-shared": "^1.0.11",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.4.5",
     "@react-navigation/drawer": "^7.5.6",
@@ -28,6 +28,7 @@
     "expo-secure-store": "~14.2.3",
     "expo-sqlite": "~15.2.14",
     "expo-status-bar": "~2.2.3",
+    "knex": "^3.1.0",
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-async-storage": "^0.0.1",
