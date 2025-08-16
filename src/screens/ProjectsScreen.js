@@ -124,7 +124,7 @@ const ProjectsScreen = ({ navigation, route }) => {
   return (
     <ScreenWrapper
       headerTitle={`Welcome, ${currentUser?.first_name || 'User'}`}
-      headerSubtitle="Track your work sessions"
+      headerSubtitle="Track your hour reports"
       scroll
       footer={
         <View style={styles.footer}>

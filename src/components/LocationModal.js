@@ -1,108 +1,136 @@
-
+// components/LocationModal.js
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { appStyleConstants } from '@orenuki/dh-reporting-shared';
+import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 
 const LOCATIONS = [
-    { id: 'HOME', name: 'Home', icon: '🏠' },
-    { id: 'OFFICE', name: 'Office', icon: '🏢' },
-    { id: 'CLIENT', name: 'Client', icon: '👥' }
+  { id: 'HOME', name: 'Home', icon: '🏠' },
+  { id: 'OFFICE', name: 'Office', icon: '🏢' },
+  { id: 'CLIENT', name: 'Client', icon: '👥' }
 ];
 
 export const LocationModal = ({ visible, project, onSelectLocation, onClose }) => {
-    if (!visible) return null;
-
-    return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={styles.locationMenu}>
-                    <Text style={styles.locationTitle}>Choose Location</Text>
-                    <Text style={styles.locationProject}>{project?.name || ''}</Text>
-                    <View style={styles.locationRow}>
-                        {LOCATIONS.map((loc, index) => (
-                            <TouchableOpacity
-                                key={loc.id || `location-${index}`}
-                                style={styles.locationChip}
-                                onPress={() => onSelectLocation(loc.name)}
-                                activeOpacity={0.8}
-                            >
-                                <Text style={styles.locationChipText}>{loc.icon} {loc.name}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                    <TouchableOpacity style={styles.closeX} onPress={onClose}>
-                        <Text style={styles.closeXText}>✕</Text>
-                    </TouchableOpacity>
+  if (!visible) return null;
+  
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={modalStyles.overlay}>
+        <TouchableOpacity 
+          style={modalStyles.backdrop} 
+          onPress={onClose} 
+          activeOpacity={1} 
+        />
+        
+        <View style={modalStyles.content}>
+          <View style={modalStyles.handle} />
+          
+          <Text style={modalStyles.title}>Select Location</Text>
+          <Text style={modalStyles.projectName}>{project?.name || ''}</Text>
+          
+          <View style={modalStyles.locationGrid}>
+            {LOCATIONS.map((loc) => (
+              <TouchableOpacity
+                key={loc.id}
+                style={modalStyles.locationCard}
+                onPress={() => onSelectLocation(loc.name)}
+                activeOpacity={0.7}
+              >
+                <View style={modalStyles.iconContainer}>
+                  <Text style={modalStyles.locationIcon}>{loc.icon}</Text>
                 </View>
-            </View>
-        </Modal>
-    );
+                <Text style={modalStyles.locationName}>{loc.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
-const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end'
-    },
-    locationMenu: {
-        backgroundColor: appStyleConstants.COLOR_SURFACE,
-        borderTopLeftRadius: appStyleConstants.SIZE_24,
-        borderTopRightRadius: appStyleConstants.SIZE_24,
-        padding: appStyleConstants.SIZE_24,
-        ...appStyleConstants.SHADOW_BOX_2,
-    },
-    locationTitle: {
-        fontSize: appStyleConstants.FONT_SIZE_14,
-        color: appStyleConstants.COLOR_TEXT_MUTED
-    },
-    locationProject: {
-        fontSize: appStyleConstants.FONT_SIZE_20,
-        color: appStyleConstants.COLOR_TEXT_LIGHT,
-        fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-        marginTop: appStyleConstants.SIZE_4,
-        marginBottom: appStyleConstants.SIZE_16,
-        textAlign: 'center',
-    },
-    locationRow: {
-        flexDirection: 'row',
-        gap: appStyleConstants.SIZE_8,
-        justifyContent: 'space-between',
-        marginBottom: appStyleConstants.SIZE_32,
-    },
-    locationChip: {
-        flex: 1,
-        paddingVertical: appStyleConstants.SIZE_12,
-        paddingHorizontal: appStyleConstants.SIZE_12,
-        borderRadius: appStyleConstants.SIZE_12,
-        backgroundColor: appStyleConstants.COLOR_PRIMARY,
-        alignItems: 'center',
-        ...appStyleConstants.SHADOW_BOX_1,
-    },
-    locationChipText: {
-        color: appStyleConstants.COLOR_WHITE,
-        fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD
-    },
-    closeX: {
-        position: 'absolute',
-        right: appStyleConstants.SIZE_16,
-        top: appStyleConstants.SIZE_16,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: appStyleConstants.COLOR_DARK,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    closeXText: {
-        color: appStyleConstants.COLOR_TEXT_LIGHT,
-        fontSize: appStyleConstants.FONT_SIZE_18
-    },
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  content: {
+    backgroundColor: styles.COLOR_SURFACE,
+    borderTopLeftRadius: styles.RADIUS_XLARGE,
+    borderTopRightRadius: styles.RADIUS_XLARGE,
+    padding: styles.SIZE_24,
+    paddingBottom: styles.SIZE_40,
+    borderWidth: 1,
+    borderColor: styles.COLOR_BORDER,
+    ...styles.SHADOW_LARGE,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    backgroundColor: styles.COLOR_BORDER_LIGHT || styles.COLOR_BORDER,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: styles.SIZE_24,
+  },
+  title: {
+    fontSize: styles.FONT_SIZE_14,
+    fontWeight: styles.FONT_WEIGHT_MEDIUM,
+    color: styles.COLOR_TEXT_MUTED,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  projectName: {
+    fontSize: styles.FONT_SIZE_24,
+    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
+    color: styles.COLOR_TEXT || styles.COLOR_TEXT_LIGHT,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+    marginTop: styles.SIZE_8,
+    marginBottom: styles.SIZE_32,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  locationGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  locationCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: styles.SIZE_16,
+    marginHorizontal: styles.SIZE_6,
+    borderRadius: styles.RADIUS_LARGE,
+    backgroundColor: styles.COLOR_SURFACE_LIGHT || styles.COLOR_SURFACE,
+    borderWidth: 1,
+    borderColor: styles.COLOR_BORDER,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: styles.RADIUS_LARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: styles.SIZE_12,
+    backgroundColor: styles.COLOR_PRIMARY_ALPHA || 'rgba(16, 185, 129, 0.1)',
+  },
+  locationIcon: {
+    fontSize: 28,
+  },
+  locationName: {
+    fontSize: styles.FONT_SIZE_14,
+    fontWeight: styles.FONT_WEIGHT_MEDIUM,
+    color: styles.COLOR_TEXT_LIGHT,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+  },
 });
 
 export default LocationModal;

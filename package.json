@@ -17,7 +17,7 @@
     "migration:status": "node src/scripts/migration.cjs status"
   },
   "dependencies": {
-    "@orenuki/dh-reporting-shared": "^1.0.9",
+    "@orenuki/dh-reporting-shared": "^1.0.11",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.4.5",
     "@react-navigation/drawer": "^7.5.6",

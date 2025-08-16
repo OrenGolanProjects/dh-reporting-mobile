@@ -1,6 +1,7 @@
+// components/ProjectListView.js
 import React from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { appStyleConstants } from '@orenuki/dh-reporting-shared';
+import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 import { LOCATION } from '../utils/constants';
 
 const LOCATIONS = [
@@ -34,78 +35,100 @@ export const ProjectListView = ({
 
   if (projects.length === 0) {
     return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyEmoji}>📋</Text>
-        <Text style={styles.emptyText}>No projects available</Text>
+      <View style={listStyles.empty}>
+        <View style={listStyles.emptyIcon}>
+          <Text style={listStyles.emptyEmoji}>📁</Text>
+        </View>
+        <Text style={listStyles.emptyText}>No projects yet</Text>
+        <Text style={listStyles.emptySubtext}>
+          Add your first project to start tracking
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.listContainer}>
-      {projects.map((project) => {
+    <ScrollView 
+      contentContainerStyle={listStyles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      {projects.map((project, index) => {
         const isProjectActive = activeSession?.project_id === project.id;
         const hasActiveSession = activeSession !== null;
         const isProjectDisabled = hasActiveSession && !isProjectActive;
 
         return (
-          <View key={project.id} style={[
-            styles.projectStrip,
-            isProjectActive && styles.activeProjectStrip,
-            isProjectDisabled && styles.disabledProjectStrip
-          ]}>
-            <TouchableOpacity 
-              style={styles.projectInfo}
-              onPress={() => onProjectPress && onProjectPress(project)}
-              disabled={isProjectDisabled}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.projectName,
-                isProjectActive && styles.activeProjectName,
-                isProjectDisabled && styles.disabledProjectName
-              ]}>
-                {project.name}
-              </Text>
-              {isProjectActive && (
-                <View style={styles.workingBadge}>
-                  <Text style={styles.workingBadgeText}>● WORKING</Text>
+          <View key={project.id}>
+            <View style={[
+              listStyles.projectCard,
+              isProjectActive && listStyles.projectCardActive,
+              isProjectDisabled && listStyles.projectCardDisabled
+            ]}>
+              {/* Project Header */}
+              <TouchableOpacity 
+                style={listStyles.projectHeader}
+                onPress={() => onProjectPress && onProjectPress(project)}
+                disabled={isProjectDisabled}
+                activeOpacity={0.7}
+              >
+                <View style={listStyles.projectTitleRow}>
+                  {isProjectActive && (
+                    <View style={listStyles.activeIndicator} />
+                  )}
+                  <Text style={[
+                    listStyles.projectName,
+                    isProjectActive && listStyles.projectNameActive,
+                    isProjectDisabled && listStyles.projectNameDisabled
+                  ]}>
+                    {project.name}
+                  </Text>
                 </View>
-              )}
-            </TouchableOpacity>
+                
+                {isProjectActive && (
+                  <Text style={listStyles.statusText}>ACTIVE</Text>
+                )}
+              </TouchableOpacity>
 
-            <View style={styles.locationIcons}>
-              {LOCATIONS.map((location) => {
-                const isActiveForLocation = !!(activeSession &&
-                  activeSession.project_id === project.id &&
-                  activeSession.active_location === location.name);
+              {/* Location Buttons */}
+              <View style={listStyles.locationRow}>
+                {LOCATIONS.map((location) => {
+                  const isLocationActive = !!(activeSession &&
+                    activeSession.project_id === project.id &&
+                    activeSession.active_location === location.name);
 
-                return (
-                  <TouchableOpacity
-                    key={`${project.id}-${location.id}`}
-                    style={[
-                      styles.locationIcon,
-                      isActiveForLocation && styles.activeLocationIcon,
-                      isProjectDisabled && styles.disabledLocationIcon
-                    ]}
-                    onPress={() => handleLocationPress(project, location)}
-                    disabled={isProjectDisabled}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[
-                      styles.locationIconEmoji,
-                      isActiveForLocation && styles.activeLocationIconEmoji,
-                      isProjectDisabled && styles.disabledLocationIconEmoji
-                    ]}>
-                      {location.icon}
-                    </Text>
-                    {isActiveForLocation && (
-                      <View style={styles.locationActiveIndicator} />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+                  return (
+                    <TouchableOpacity
+                      key={`${project.id}-${location.id}`}
+                      style={[
+                        listStyles.locationButton,
+                        isLocationActive && listStyles.locationButtonActive,
+                        isProjectDisabled && listStyles.locationButtonDisabled
+                      ]}
+                      onPress={() => handleLocationPress(project, location)}
+                      disabled={isProjectDisabled}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[
+                        listStyles.locationIcon,
+                        isLocationActive && listStyles.locationIconActive,
+                      ]}>
+                        {location.icon}
+                      </Text>
+                      <Text style={[
+                        listStyles.locationText,
+                        isLocationActive && listStyles.locationTextActive,
+                        isProjectDisabled && listStyles.locationTextDisabled
+                      ]}>
+                        {location.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
+            
+            {/* Separator - except for last item */}
+            {index < projects.length - 1 && <View style={listStyles.separator} />}
           </View>
         );
       })}
@@ -113,111 +136,143 @@ export const ProjectListView = ({
   );
 };
 
-const styles = StyleSheet.create({
-  listContainer: {
-    gap: appStyleConstants.SIZE_16,
-    paddingBottom: appStyleConstants.SIZE_24,
+const listStyles = StyleSheet.create({
+  container: {
+    paddingBottom: styles.SIZE_24,
   },
-  projectStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: appStyleConstants.COLOR_SURFACE,
-    borderRadius: appStyleConstants.SIZE_12,
-    padding: appStyleConstants.SIZE_16,
-    borderWidth: 2,
-    borderColor: appStyleConstants.COLOR_BORDER,
-    ...appStyleConstants.SHADOW_BOX_2,
+  projectCard: {
+    backgroundColor: styles.COLOR_SURFACE,
+    borderRadius: styles.RADIUS_LARGE,
+    padding: styles.SIZE_20,
+    marginVertical: styles.SIZE_8,
   },
-  activeProjectStrip: {
-    backgroundColor: appStyleConstants.COLOR_TIMER_ACTIVE,
-    borderColor: appStyleConstants.COLOR_SECONDARY_LIGHT,
-    transform: [{ scale: 1.01 }],
+  projectCardActive: {
+    backgroundColor: styles.COLOR_SURFACE_LIGHT || styles.COLOR_SURFACE,
+    borderWidth: 1,
+    borderColor: styles.COLOR_PRIMARY,
+    padding: styles.SIZE_20 - 1, // Compensate for border
   },
-  disabledProjectStrip: {
-    opacity: 0.4,
-    backgroundColor: appStyleConstants.COLOR_DARKER,
-  },
-  projectInfo: {
-    flex: 1,
-    paddingRight: appStyleConstants.SIZE_16,
-  },
-  projectName: {
-    fontSize: appStyleConstants.FONT_SIZE_16,
-    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-    color: appStyleConstants.COLOR_TEXT_LIGHT,
-    marginBottom: appStyleConstants.SIZE_4,
-  },
-  activeProjectName: {
-    color: appStyleConstants.COLOR_WHITE,
-  },
-  disabledProjectName: {
-    color: appStyleConstants.COLOR_TEXT_MUTED,
-  },
-  workingBadge: {
-    alignSelf: 'flex-start',
-  },
-  workingBadgeText: {
-    fontSize: appStyleConstants.FONT_SIZE_10,
-    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-    color: appStyleConstants.COLOR_WHITE,
-    letterSpacing: 0.5,
-  },
-  locationIcons: {
-    flexDirection: 'row',
-    gap: appStyleConstants.SIZE_8,
-  },
-  locationIcon: {
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: appStyleConstants.COLOR_DARK,
-    borderRadius: appStyleConstants.SIZE_12,
-    borderWidth: 2,
-    borderColor: appStyleConstants.COLOR_BORDER,
-    position: 'relative',
-  },
-  activeLocationIcon: {
-    backgroundColor: appStyleConstants.COLOR_WHITE,
-    borderColor: appStyleConstants.COLOR_WHITE,
-    transform: [{ scale: 1.1 }],
-  },
-  disabledLocationIcon: {
-    backgroundColor: appStyleConstants.COLOR_DARKER,
-    borderColor: appStyleConstants.COLOR_MUTED,
+  projectCardDisabled: {
     opacity: 0.3,
   },
-  locationIconEmoji: {
-    fontSize: appStyleConstants.FONT_SIZE_24,
+  projectHeader: {
+    marginBottom: styles.SIZE_16,
   },
-  activeLocationIconEmoji: {
-    fontSize: appStyleConstants.FONT_SIZE_20,
+  projectTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  disabledLocationIconEmoji: {
+  activeIndicator: {
+    width: 3,
+    height: 18,
+    backgroundColor: styles.COLOR_PRIMARY,
+    borderRadius: 2,
+    marginRight: styles.SIZE_12,
+  },
+  projectName: {
+    fontSize: styles.FONT_SIZE_18,
+    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
+    color: styles.COLOR_TEXT || styles.COLOR_TEXT_LIGHT,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  projectNameActive: {
+    color: styles.COLOR_TEXT || styles.COLOR_TEXT_LIGHT,
+  },
+  projectNameDisabled: {
+    color: styles.COLOR_TEXT_SUBTLE,
+  },
+  statusText: {
+    fontSize: styles.FONT_SIZE_10,
+    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
+    color: styles.COLOR_PRIMARY,
+    letterSpacing: 0.8,
+    marginTop: styles.SIZE_4,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    marginHorizontal: -styles.SIZE_4,
+  },
+  locationButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: styles.COLOR_DARK,
+    borderRadius: styles.RADIUS_MEDIUM,
+    paddingVertical: styles.SIZE_12,
+    paddingHorizontal: styles.SIZE_8,
+    marginHorizontal: styles.SIZE_4,
+    borderWidth: 1,
+    borderColor: styles.COLOR_BORDER,
+  },
+  locationButtonActive: {
+    backgroundColor: styles.COLOR_PRIMARY,
+    borderColor: styles.COLOR_PRIMARY,
+  },
+  locationButtonDisabled: {
+    backgroundColor: styles.COLOR_DARK,
     opacity: 0.5,
   },
-  locationActiveIndicator: {
-    position: 'absolute',
-    top: -3,
-    right: -3,
-    width: 12,
-    height: 12,
-    backgroundColor: appStyleConstants.COLOR_SECONDARY,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: appStyleConstants.COLOR_WHITE,
+  locationIcon: {
+    fontSize: 20,
+    marginRight: styles.SIZE_6,
   },
+  locationIconActive: {
+    // Icon stays same when active
+  },
+  locationText: {
+    fontSize: styles.FONT_SIZE_14,
+    fontWeight: styles.FONT_WEIGHT_MEDIUM,
+    color: styles.COLOR_TEXT_MUTED,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+  },
+  locationTextActive: {
+    color: styles.COLOR_WHITE,
+    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
+  },
+  locationTextDisabled: {
+    color: styles.COLOR_TEXT_SUBTLE,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: styles.COLOR_BORDER,
+    marginVertical: styles.SIZE_12,
+    opacity: 0.3,
+  },
+  // Empty state
   empty: {
     alignItems: 'center',
-    padding: appStyleConstants.SIZE_32,
+    justifyContent: 'center',
+    paddingVertical: styles.SIZE_64,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: styles.RADIUS_LARGE,
+    backgroundColor: styles.COLOR_SURFACE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: styles.SIZE_20,
   },
   emptyEmoji: {
-    fontSize: 42,
-    marginBottom: appStyleConstants.SIZE_8,
+    fontSize: 40,
   },
   emptyText: {
-    ...appStyleConstants.STYLE_BODY,
-    color: appStyleConstants.COLOR_TEXT_MUTED,
+    fontSize: styles.FONT_SIZE_18,
+    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
+    color: styles.COLOR_TEXT || styles.COLOR_TEXT_LIGHT,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+    marginBottom: styles.SIZE_8,
+  },
+  emptySubtext: {
+    fontSize: styles.FONT_SIZE_14,
+    color: styles.COLOR_TEXT_MUTED,
+    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
+    textAlign: 'center',
+    paddingHorizontal: styles.SIZE_40,
   },
 });
 
