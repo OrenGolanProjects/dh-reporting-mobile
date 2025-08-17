@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+// src/screens/SignUpScreen.js
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
@@ -26,31 +27,42 @@ const SignUpScreen = ({ navigation }) => {
   const isEmailValid = validateEmail(trimmedEmail);
   const canSubmit = !!trimmedFirst && !!trimmedLast && isEmailValid && !isLoading;
 
-  const goToSignIn = () => navigation.navigate('Signin');
-
   const handleSignUp = async () => {
-    if (!canSubmit) {
-      return console.warn('Please fill all fields correctly');
-    }
+    if (!canSubmit) return;
 
     setIsLoading(true);
     try {
-      console.log('🔄 Creating user account...');
-      // Check if user already exists
+      console.log('🔍 Starting signup process...');
+      console.log('📧 Checking for existing user with email:', trimmedEmail);
+
       const existingUser = await User.findBy('email', trimmedEmail);
+      console.log('✅ User check complete:', existingUser ? 'User exists' : 'No existing user');
+
       if (existingUser) {
-        Alert.alert(
-          'Account Exists',
-          'An account with this email already exists. Please sign in instead.',
-          [
-            { text: 'OK' },
-            { text: 'Go to Sign In', onPress: goToSignIn }
-          ]
-        );
-        return;
+        setIsLoading(false);
+
+        return new Promise((resolve) => {
+          Alert.alert(
+            'Account Exists',
+            'An account with this email already exists. Please sign in instead.',
+            [
+              {
+                text: 'OK',
+                onPress: resolve
+              },
+              {
+                text: 'Go to Sign In',
+                onPress: () => {
+                  resolve();
+                  navigation.navigate('Signin');
+                }
+              }
+            ]
+          );
+        });
       }
 
-      // Create new user in database
+      console.log('📝 Creating new user...');
       const newUser = await User.create({
         first_name: trimmedFirst,
         last_name: trimmedLast,
@@ -58,49 +70,40 @@ const SignUpScreen = ({ navigation }) => {
         phone_number: null,
         hms_user: null
       });
+      console.log('✅ User created:', newUser);
 
-      console.log('✅ User created successfully:', newUser.email);
-
-      // Automatically log them in
+      console.log('🔐 Setting session...');
       await Session.setCurrent(newUser.id);
-      console.log('✅ User logged in automatically');
+      console.log('✅ Session set');
 
-      // Show success message
       Alert.alert(
         'Account Created!',
         `Welcome ${trimmedFirst}! Your account has been created successfully.`,
-        [
-          {
-            text: 'Continue',
-            onPress: () => navigation.replace('Projects')
-          }
-        ]
+        [{ text: 'Continue' }]
       );
 
     } catch (error) {
       console.error('❌ Signup error:', error);
-
-      Alert.alert(
-        'Signup Failed',
-        'Something went wrong while creating your account. Please try again.',
-        [{ text: 'OK' }]
-      );
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Stack trace:', error.stack);
+      Alert.alert('Signup Failed', 'Something went wrong while creating your account. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <ScreenWrapper
       headerTitle="DH-Reporting"
       headerSubtitle="Sign-Up"
+      headerVariant="compact"
       card
       center
       keyboard
       footer={
         <SecondaryButton
           title="Back to Sign-In"
-          onPress={goToSignIn}
+          onPress={() => navigation.navigate('Signin')}
           disabled={isLoading}
         />
       }
@@ -113,8 +116,6 @@ const SignUpScreen = ({ navigation }) => {
           value={firstName}
           onChangeText={setFirstName}
           autoCapitalize="words"
-          autoComplete="name-given"
-          textContentType="givenName"
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => lastRef.current?.focus()}
@@ -131,8 +132,6 @@ const SignUpScreen = ({ navigation }) => {
           value={lastName}
           onChangeText={setLastName}
           autoCapitalize="words"
-          autoComplete="name-family"
-          textContentType="familyName"
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => emailRef.current?.focus()}
@@ -154,13 +153,11 @@ const SignUpScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <View style={{ width: '100%' }}>
-          <PrimaryButton
-            title={isLoading ? "Creating Account..." : "Create Account"}
-            onPress={handleSignUp}
-            disabled={!canSubmit}
-          />
-        </View>
+        <PrimaryButton
+          title={isLoading ? "Creating Account..." : "Create Account"}
+          onPress={handleSignUp}
+          disabled={!canSubmit}
+        />
 
         <Text style={styles.helpText}>
           {isLoading
@@ -169,7 +166,6 @@ const SignUpScreen = ({ navigation }) => {
           }
         </Text>
       </View>
-
     </ScreenWrapper>
   );
 };

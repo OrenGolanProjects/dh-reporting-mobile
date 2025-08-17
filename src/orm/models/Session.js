@@ -1,4 +1,5 @@
 import BaseModel from '../BaseModel';
+import { getDb } from '../../database/db';
 
 class Session extends BaseModel {
   static tableName = 'session';
@@ -10,42 +11,73 @@ class Session extends BaseModel {
   
   static async setCurrent(userId) {
     const timestamp = Date.now();
-    const existing = await this.getCurrent();
     
-    if (existing) {
-      // Update existing session - WITHOUT created_at/updated_at
-      const db = await this.query().db;
-      await db.runAsync(
-        'UPDATE session SET user_id = ?, signed_in_at = ?, last_activity = ? WHERE id = 1',
-        [userId, timestamp, timestamp]
+    try {
+      // Get the database connection directly
+      const db = await getDb();
+      
+      // Check if session exists
+      const existing = await db.getFirstAsync(
+        'SELECT * FROM session WHERE id = 1'
       );
-    } else {
-      // Create new session - WITHOUT created_at/updated_at
-      const db = await this.query().db;
-      await db.runAsync(
-        'INSERT INTO session (id, user_id, signed_in_at, last_activity) VALUES (?, ?, ?, ?)',
-        [1, userId, timestamp, timestamp]
-      );
+      
+      if (existing) {
+        // Update existing session
+        await db.runAsync(
+          'UPDATE session SET user_id = ?, signed_in_at = ?, last_activity = ? WHERE id = 1',
+          [userId, timestamp, timestamp]
+        );
+        console.log('✅ Session updated for user:', userId);
+      } else {
+        // Create new session
+        await db.runAsync(
+          'INSERT INTO session (id, user_id, signed_in_at, last_activity) VALUES (?, ?, ?, ?)',
+          [1, userId, timestamp, timestamp]
+        );
+        console.log('✅ Session created for user:', userId);
+      }
+      
+      return this.getCurrent();
+    } catch (error) {
+      console.error('❌ Session.setCurrent error:', error);
+      throw error;
     }
-    
-    return this.getCurrent();
   }
   
   static async clear() {
-    const existing = await this.getCurrent();
-    if (existing) {
-      await this.query().delete(1);
+    try {
+      const db = await getDb();
+      
+      // Check if session exists before trying to delete
+      const existing = await db.getFirstAsync(
+        'SELECT * FROM session WHERE id = 1'
+      );
+      
+      if (existing) {
+        await db.runAsync('DELETE FROM session WHERE id = 1');
+        console.log('✅ Session cleared');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Session.clear error:', error);
+      throw error;
     }
-    return true;
   }
   
   async updateActivity() {
-    const db = await this.constructor.query().db;
-    await db.runAsync(
-      'UPDATE session SET last_activity = ? WHERE id = 1',
-      [Date.now()]
-    );
-    return this;
+    try {
+      const db = await getDb();
+      await db.runAsync(
+        'UPDATE session SET last_activity = ? WHERE id = 1',
+        [Date.now()]
+      );
+      console.log('✅ Session activity updated');
+      return this;
+    } catch (error) {
+      console.error('❌ updateActivity error:', error);
+      throw error;
+    }
   }
 }
 

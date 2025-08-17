@@ -1,18 +1,16 @@
+// src/screens/ProjectsScreen.js
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Alert, Text } from 'react-native';
+import { View, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
-import PrimaryButton from '../components/buttons/PrimaryButton';
-import SecondaryButton from '../components/buttons/SecondaryButton';
 import { useWorkSession } from '../hooks/useWorkSession';
 import { ActiveSessionCard } from '../components/ActiveSessionCard';
 import { ViewToggle } from '../components/ViewToggle';
 import { LocationModal } from '../components/LocationModal';
 import { ProjectGalleryView } from '../components/ProjectGalleryView';
 import { ProjectListView } from '../components/ProjectListView';
-import { Session, WorkSession } from '../orm/models';
 
-const ProjectsScreen = ({ navigation, route }) => {
+const ProjectsScreen = ({ navigation }) => {
   const {
     projects,
     currentUser,
@@ -26,6 +24,14 @@ const ProjectsScreen = ({ navigation, route }) => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showLocationMenu, setShowLocationMenu] = useState(false);
   const [viewMode, setViewMode] = useState('list');
+  const handleSettings = () => navigation.navigate('Profile', { screen: 'Settings' });
+
+  const handleNavigateToComponents = () => {
+    navigation.navigate('NewScreen', {
+      userId: currentUser?.id,
+      projectId: selectedProject?.id
+    });
+  };
 
   const handleProjectPress = (project) => {
     setSelectedProject(project);
@@ -86,30 +92,23 @@ const ProjectsScreen = ({ navigation, route }) => {
     }
   };
 
-  const handleLogout = useCallback(async () => {
-    Alert.alert('Logout', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          try {
-            if (activeSession) {
-              const session = await WorkSession.find(activeSession.id);
-              await session.update({
-                end_work_time: Date.now(),
-                notes: session.notes + ' | Ended due to logout'
-              });
-            }
-            await Session.clear();
-            navigation.replace('Signin');
-          } catch (error) {
-            console.error('Error during logout:', error);
-            navigation.replace('Signin');
-          }
-        },
-      },
-    ]);
-  }, [navigation, activeSession]);
+  // Header Right Component with Settings and Components buttons
+  const HeaderRight = () => (
+    <View style={styles.headerRight}>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleSettings}
+      >
+        <Text style={styles.headerButtonText}>⚙️</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleNavigateToComponents}
+      >
+        <Text style={styles.headerButtonText}>🎨</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   if (isLoading) {
     return (
@@ -125,13 +124,9 @@ const ProjectsScreen = ({ navigation, route }) => {
     <ScreenWrapper
       headerTitle={`Welcome, ${currentUser?.first_name || 'User'}`}
       headerSubtitle="Track your hour reports"
+      headerRight={<HeaderRight />}
+      headerVariant="compact"
       scroll
-      footer={
-        <View style={styles.footer}>
-          <SecondaryButton title="Back to Splash" onPress={() => navigation.navigate('Splash')} />
-          <PrimaryButton title="Logout" onPress={handleLogout} />
-        </View>
-      }
     >
       <View style={styles.container}>
         <ActiveSessionCard activeSession={activeSession} />
@@ -182,20 +177,36 @@ const styles = StyleSheet.create({
     ...appStyleConstants.STYLE_BODY,
     color: appStyleConstants.COLOR_TEXT_MUTED,
   },
+
+  // Header Right Actions
+  headerRight: {
+    flexDirection: 'row',
+    gap: appStyleConstants.SIZE_8,
+  },
+  headerButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: appStyleConstants.COLOR_PRIMARY,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerButtonText: {
+    fontSize: 16,
+  },
+
+  // Section Header
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: appStyleConstants.SIZE_16,
+    marginTop: appStyleConstants.SIZE_16,
   },
   sectionTitle: {
     fontSize: appStyleConstants.FONT_SIZE_18,
     color: appStyleConstants.COLOR_TEXT_LIGHT,
     fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: appStyleConstants.SIZE_12,
   },
 });
 

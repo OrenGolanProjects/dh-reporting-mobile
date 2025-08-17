@@ -1,3 +1,4 @@
+// src/screens/SignInScreen.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
@@ -6,7 +7,6 @@ import EmailField from '../components/fields/EmailField';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { validateEmail } from '../utils/validation';
-// Import our database functions
 import { getUserByEmail, setCurrentUser } from '../database';
 
 const SignInScreen = ({ navigation }) => {
@@ -17,47 +17,26 @@ const SignInScreen = ({ navigation }) => {
   const isValid = validateEmail(trimmed);
   const canSubmit = isValid && !isLoading;
 
-  const goToSplash = () => navigation.replace('Splash');
-  const goToSignUp = () => navigation.navigate('Signup');
-
-  /**
-   * Handle user sign in with database integration
-   * Note: In a real app, you'd verify a password or send an OTP
-   * For this example, we'll just check if the user exists
-   */
   const handleSendCode = async () => {
-    if (!isValid) {
-      return console.warn('Invalid email');
-    }
+    if (!isValid) return;
 
     setIsLoading(true);
 
     try {
-      console.log('🔍 Looking for user:', trimmed);
-
-      // Check if user exists in database
       const user = await getUserByEmail(trimmed);
 
       if (user) {
-        console.log('✅ User found:', user.email);
-
-        // In a real app, you'd send an OTP here
-        // For this example, we'll just log them in directly
         Alert.alert(
           'User Found!',
           `Welcome back ${user.first_name}! In a real app, we'd send you a login code. For now, we'll log you in directly.`,
           [
-            {
-              text: 'Cancel',
-              style: 'cancel'
-            },
+            { text: 'Cancel', style: 'cancel' },
             {
               text: 'Login',
               onPress: async () => {
                 try {
                   await setCurrentUser(user.id);
                   console.log('✅ User logged in successfully');
-                  navigation.replace('Projects');
                 } catch (error) {
                   console.error('❌ Login error:', error);
                   Alert.alert('Login Failed', 'Something went wrong. Please try again.');
@@ -66,26 +45,19 @@ const SignInScreen = ({ navigation }) => {
             }
           ]
         );
-
       } else {
-        console.log('❌ User not found');
         Alert.alert(
           'Account Not Found',
           'No account found with this email address. Would you like to create one?',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Create Account', onPress: goToSignUp }
+            { text: 'Create Account', onPress: () => navigation.navigate('Signup') }
           ]
         );
       }
-
     } catch (error) {
       console.error('❌ Sign in error:', error);
-      Alert.alert(
-        'Sign In Failed',
-        'Something went wrong. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Sign In Failed', 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -95,10 +67,17 @@ const SignInScreen = ({ navigation }) => {
     <ScreenWrapper
       headerTitle="DH-Reporting"
       headerSubtitle="Sign-In"
+      headerVariant="compact"
       card
       center
       keyboard
-      footer={<SecondaryButton title="Back to Splash" onPress={goToSplash} disabled={isLoading} />}
+      footer={
+        <SecondaryButton 
+          title="Back to Splash" 
+          onPress={() => navigation.navigate('Splash')} 
+          disabled={isLoading} 
+        />
+      }
     >
       <EmailField
         placeholder="Enter your email"
@@ -107,7 +86,6 @@ const SignInScreen = ({ navigation }) => {
         returnKeyType="done"
         onSubmitEditing={handleSendCode}
         autoFocus
-        accessibilityLabel="Email"
         editable={!isLoading}
       />
 
@@ -128,13 +106,11 @@ const SignInScreen = ({ navigation }) => {
 
         <SecondaryButton
           title="Create New Account"
-          onPress={goToSignUp}
+          onPress={() => navigation.navigate('Signup')}
           disabled={isLoading}
           style={[styles.fullWidthBtn, styles.secondaryBtn]}
         />
       </View>
-
-
     </ScreenWrapper>
   );
 };
@@ -158,6 +134,5 @@ const styles = StyleSheet.create({
     marginTop: appStyleConstants.SIZE_4,
   },
 });
-
 
 export default SignInScreen;
