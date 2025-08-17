@@ -1,6 +1,6 @@
+// App.js
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   StatusBar,
   Platform,
   Dimensions,
@@ -10,15 +10,13 @@ import {
   StyleSheet
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { initDatabase, getDb, getLatestMigrationVersion, getAppliedMigrations } from './src/database';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 
-// Get device dimensions
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Database initialization hook
 const useDatabaseSetup = () => {
   const [isDbReady, setIsDbReady] = useState(false);
   const [dbError, setDbError] = useState(null);
@@ -43,8 +41,6 @@ const useDatabaseSetup = () => {
             "SELECT name FROM sqlite_master WHERE type='table'"
           );
           console.log('Tables:', tables.map(t => t.name));
-        } else {
-          console.log('🚀 PRODUCTION MODE');
         }
         
         console.log('✅ Database setup complete!');
@@ -52,7 +48,7 @@ const useDatabaseSetup = () => {
       } catch (error) {
         console.error('❌ Database setup failed:', error);
         setDbError(error.message);
-        setIsDbReady(true); // Still set to true to show error screen
+        setIsDbReady(true);
       }
     };
 
@@ -62,18 +58,18 @@ const useDatabaseSetup = () => {
   return { isDbReady, dbError };
 };
 
-// Loading screen component
 const LoadingScreen = () => (
   <View style={styles.loadingContainer}>
+    <Text style={styles.appTitle}>DH-Reporting</Text>
     <ActivityIndicator 
       size="large" 
       color={appStyleConstants.COLOR_PRIMARY} 
+      style={styles.spinner}
     />
-    <Text style={styles.loadingText}>Initializing...</Text>
+    <Text style={styles.loadingText}>Initializing database...</Text>
   </View>
 );
 
-// Error screen component
 const ErrorScreen = ({ error }) => (
   <View style={styles.errorContainer}>
     <Text style={styles.errorEmoji}>⚠️</Text>
@@ -83,68 +79,78 @@ const ErrorScreen = ({ error }) => (
   </View>
 );
 
-// Main App Content wrapped with SafeArea
-const AppContent = ({ dbError }) => {
-  const insets = useSafeAreaInsets();
-  
-  if (dbError) {
-    return <ErrorScreen error={dbError} />;
-  }
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
-    </View>
-  );
-};
-
-// Main App Component
 const App = () => {
   const { isDbReady, dbError } = useDatabaseSetup();
+
+  if (!isDbReady) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={Platform.OS === 'android' ? appStyleConstants.COLOR_DARKER : 'transparent'}
+          translucent={Platform.OS === 'android'}
+        />
+        <LoadingScreen />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={Platform.OS === 'android' ? appStyleConstants.COLOR_DARKER : 'transparent'}
+          translucent={Platform.OS === 'android'}
+        />
+        <ErrorScreen error={dbError} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
       <StatusBar
-        barStyle="light-content"  // Always light-content for dark theme
+        barStyle="light-content"
         backgroundColor={Platform.OS === 'android' ? appStyleConstants.COLOR_DARKER : 'transparent'}
         translucent={Platform.OS === 'android'}
       />
-      {!isDbReady ? (
-        <SafeAreaView style={styles.container}>
-          <LoadingScreen />
-        </SafeAreaView>
-      ) : (
-        <AppContent dbError={dbError} />
-      )}
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: appStyleConstants.COLOR_DARK, // Main app dark background
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: appStyleConstants.COLOR_DARK, // Dark background
+    backgroundColor: appStyleConstants.COLOR_DARKER,
+    padding: appStyleConstants.SIZE_24,
+  },
+  appTitle: {
+    fontSize: appStyleConstants.SIZE_32,
+    fontWeight: 'bold',
+    color: appStyleConstants.COLOR_PRIMARY,
+    marginBottom: appStyleConstants.SIZE_48,
+    textAlign: 'center',
+  },
+  spinner: {
+    marginBottom: appStyleConstants.SIZE_16,
   },
   loadingText: {
-    marginTop: appStyleConstants.SIZE_16,
     fontSize: appStyleConstants.FONT_SIZE_16,
-    color: appStyleConstants.COLOR_TEXT_MUTED, // Muted text on dark
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: appStyleConstants.SIZE_24,
-    backgroundColor: appStyleConstants.COLOR_DARK, // Dark background
+    backgroundColor: appStyleConstants.COLOR_DARK,
   },
   errorEmoji: {
     fontSize: 64,
@@ -153,22 +159,22 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: appStyleConstants.FONT_SIZE_24,
     fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
-    marginBottom: appStyleConstants.SIZE_10,
-    color: appStyleConstants.COLOR_ERROR, // Error red
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
+    marginBottom: appStyleConstants.SIZE_16,
+    color: appStyleConstants.COLOR_ERROR,
+    textAlign: 'center',
   },
   errorMessage: {
     fontSize: appStyleConstants.FONT_SIZE_16,
     textAlign: 'center',
     marginBottom: appStyleConstants.SIZE_24,
-    color: appStyleConstants.COLOR_TEXT_LIGHT, // Light text on dark
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
+    lineHeight: 24,
   },
   errorHint: {
     fontSize: appStyleConstants.FONT_SIZE_14,
     fontStyle: 'italic',
-    color: appStyleConstants.COLOR_TEXT_MUTED, // Muted text
-    fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    textAlign: 'center',
   },
 });
 
