@@ -1,18 +1,10 @@
 // App.js
 import React, { useEffect, useState } from 'react';
-import {
-  StatusBar,
-  Platform,
-  Dimensions,
-  View,
-  Text,
-  ActivityIndicator,
-  StyleSheet
-} from 'react-native';
+import { StatusBar, Platform, Dimensions, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
-import { initDatabase, getDb, getLatestMigrationVersion, getAppliedMigrations } from './src/database';
+import { initDatabase, getDb, getLatestMigrationVersion, getAppliedMigrations, runMigrations } from './src/database';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -25,29 +17,61 @@ const useDatabaseSetup = () => {
     const setupDatabase = async () => {
       try {
         console.log('🔄 Setting up database...');
+
+        // Step 1: Initialize database connection
         await initDatabase();
-        
+        console.log('✅ Database connection established');
+
+        // Step 2: RUN MIGRATIONS - THIS IS THE MISSING PIECE!
+        console.log('🔄 Running migrations...');
+        await runMigrations();
+        console.log('✅ Migrations completed');
+
+        // Step 3: Debug info (only in development)
         if (__DEV__) {
           console.log('🛠️ DEVELOPMENT MODE - Showing debug info');
           console.log(`📱 Device: ${Platform.OS} ${Platform.Version}`);
           console.log(`📐 Screen: ${SCREEN_WIDTH}x${SCREEN_HEIGHT}`);
-          
+
           const version = await getLatestMigrationVersion();
           const applied = await getAppliedMigrations();
           console.log("Version:", version, "Applied:", applied.length);
-          
+
           const db = await getDb();
           const tables = await db.getAllAsync(
             "SELECT name FROM sqlite_master WHERE type='table'"
           );
           console.log('Tables:', tables.map(t => t.name));
+
+          // Check specifically for session table
+          const sessionTableExists = tables.some(t => t.name === 'session');
+          if (sessionTableExists) {
+            console.log('✅ Session table exists!');
+          } else {
+            console.log('❌ Session table is missing!');
+
+            // Emergency fix if migrations didn't create session table
+            console.log('🚨 Attempting emergency fix...');
+            await db.execAsync(`
+              CREATE TABLE IF NOT EXISTS session (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                user_id INTEGER NOT NULL,
+                signed_in_at INTEGER NOT NULL,
+                last_activity INTEGER NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+              );
+            `);
+            console.log('✅ Emergency fix applied - session table created');
+          }
         }
-        
+
         console.log('✅ Database setup complete!');
         setIsDbReady(true);
       } catch (error) {
         console.error('❌ Database setup failed:', error);
+        console.error('Full error details:', error.stack);
         setDbError(error.message);
+
         setIsDbReady(true);
       }
     };
