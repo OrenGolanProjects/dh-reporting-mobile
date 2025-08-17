@@ -11,8 +11,7 @@ export const LOCATION_NAMES = {
 };
 
 export const MIGRATION_STATUS = {
-  PENDING: 'pending',   // Not run yet
-  APPLIED: 'applied',   // Successfully completed
-  FAILED: 'failed'      // Something went wrong
+  APPLIED: 'applied',
+  PENDING: 'pending',
+  FAILED: 'failed'
 };
-

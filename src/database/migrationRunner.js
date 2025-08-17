@@ -101,10 +101,9 @@ export async function runMigrations() {
 
     const db = await getDb();
 
-    // FIXED: Use static imports instead of dynamic imports
     let migrationsRun = 0;
 
-    // Migration 1: Create initial tables
+    // Migration 1: Create initial tables (users, projects, work_hours, session)
     if (!appliedVersions.includes(1)) {
       console.log('🔄 Running migration 1_create_initial_tables...');
 
@@ -173,13 +172,13 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       console.log('✅ Migration 1_create_initial_tables completed');
     }
 
-    // Migration 2: Create migration tracking
+    // Migration 2: Create migration tracking (mostly for record keeping)
     if (!appliedVersions.includes(2)) {
       console.log('🔄 Running migration 2_create_migration_tracking...');
 
       const migration2SQL = `
--- This migration is mostly redundant since we create the migrations table above
--- But we'll add the record for migration 1 if it doesn't exist
+-- Add the record for migration 1 if it doesn't exist
+-- (in case the migrations table was created after migration 1 ran)
 INSERT OR IGNORE INTO migrations (version, name, applied_at, status) 
 VALUES (1, 'create_initial_tables', strftime('%s', 'now') * 1000, 'applied');
       `;
@@ -189,6 +188,9 @@ VALUES (1, 'create_initial_tables', strftime('%s', 'now') * 1000, 'applied');
       migrationsRun++;
       console.log('✅ Migration 2_create_migration_tracking completed');
     }
+
+    // NO MORE MIGRATIONS - We only have 1 and 2 now!
+
     if (migrationsRun === 0) {
       console.log('ℹ️ No pending migrations to run');
     } else {
@@ -217,9 +219,9 @@ export async function downgradeTo(targetVersion) {
 
     const db = await getDb();
 
-    // FIXED: Use static SQL instead of dynamic imports
     for (const appliedMigration of migrationsToReverse) {
       console.log(`🔄 Reversing migration ${appliedMigration.version}_${appliedMigration.name}...`);
+      
       if (appliedMigration.version === 2) {
         // Migration 2 down: Just remove the record
         // (migrations table should stay since it's needed)
