@@ -8,11 +8,13 @@ import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import SplashScreen from '../screens/SplashScreen';
 import SignInScreen from '../screens/SignInScreen';
 import SignUpScreen from '../screens/SignUpScreen';
+import ErpCredentialsScreen from '../screens/ErpCredentialsScreen';
 import ProjectsScreen from '../screens/ProjectsScreen';
 import NewScreen from '../screens/NewScreen';
 import { ProfileScreen, SettingsScreen, HomeScreen } from '../examples/NavigationExamples';
 import { getCurrentUser } from '../database';
 import { Session, WorkSession } from '../orm/models';
+import { onAuthStateChange, signOut as firebaseSignOut } from '../services/firebase';
 
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
@@ -38,6 +40,7 @@ const LogoutScreen = ({ route }) => {
           onPress: async () => {
             setIsLoggingOut(true);
             try {
+              await firebaseSignOut();
               await Session.clear();
               console.log('✅ User logged out successfully');
               if (checkAuth) {
@@ -72,13 +75,18 @@ const LogoutScreen = ({ route }) => {
 };
 
 
-const AuthNavigator = () => (
+const AuthNavigator = ({ onErpSetupComplete }) => (
   <AuthStack.Navigator
     initialRouteName="Signin"
     screenOptions={{ headerShown: false }}
   >
     <AuthStack.Screen name="Signin" component={SignInScreen} />
     <AuthStack.Screen name="Signup" component={SignUpScreen} />
+    <AuthStack.Screen
+      name="ErpCredentials"
+      component={ErpCredentialsScreen}
+      initialParams={{ onComplete: onErpSetupComplete }}
+    />
   </AuthStack.Navigator>
 );
 
@@ -194,6 +202,16 @@ export default function AppNavigator() {
     checkAuth();
   }, []);
 
+  // Listen to Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChange((user) => {
+      console.log('🔥 Firebase auth state changed:', user ? user.email : 'signed out');
+      checkAuth();
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // Set up different intervals based on auth state
   useEffect(() => {
     let interval;
@@ -236,11 +254,15 @@ export default function AppNavigator() {
     }
   };
 
+  const handleErpSetupComplete = () => {
+    checkAuth();
+  };
+
   if (authState === 'checking') {
     return <SplashScreen />;
   }
 
   return authState === 'authenticated' ?
     <MainTabNavigator checkAuth={checkAuth} /> :
-    <AuthNavigator />;
+    <AuthNavigator onErpSetupComplete={handleErpSetupComplete} />;
 }

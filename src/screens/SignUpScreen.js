@@ -1,5 +1,5 @@
 // src/screens/SignUpScreen.js
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
@@ -9,89 +9,107 @@ import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { validateEmail } from '../utils/validation';
 import { User, Session } from '../orm/models/';
+import { signUpWithEmail } from '../services/firebase';
 
 const SignUpScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const firstRef = useRef(null);
   const lastRef = useRef(null);
   const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
 
   const trimmedFirst = firstName.trim();
   const trimmedLast = lastName.trim();
   const trimmedEmail = email.trim().toLowerCase();
+  const trimmedPassword = password;
 
   const isEmailValid = validateEmail(trimmedEmail);
-  const canSubmit = !!trimmedFirst && !!trimmedLast && isEmailValid && !isLoading;
+  const isPasswordValid = trimmedPassword.length >= 6;
+  const passwordsMatch = password === confirmPassword;
+  const canSubmit = !!trimmedFirst && !!trimmedLast && isEmailValid && isPasswordValid && passwordsMatch && !isLoading;
+
+  const getFirebaseErrorMessage = (errorCode) => {
+    switch (errorCode) {
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists. Please sign in instead.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/operation-not-allowed':
+        return 'Email/password accounts are not enabled. Please contact support.';
+      case 'auth/weak-password':
+        return 'Password is too weak. Please use at least 6 characters.';
+      default:
+        return 'Something went wrong. Please try again.';
+    }
+  };
 
   const handleSignUp = async () => {
     if (!canSubmit) return;
 
+    if (!passwordsMatch) {
+      Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      console.log('🔍 Starting signup process...');
-      console.log('📧 Checking for existing user with email:', trimmedEmail);
+      console.log('🔍 Starting Firebase signup process...');
 
+      // Create Firebase account
+      const userCredential = await signUpWithEmail(trimmedEmail, trimmedPassword);
+      console.log('✅ Firebase account created:', userCredential.user.uid);
+
+      // Create local user record for offline support
       const existingUser = await User.findBy('email', trimmedEmail);
-      console.log('✅ User check complete:', existingUser ? 'User exists' : 'No existing user');
 
+      let localUser;
       if (existingUser) {
-        setIsLoading(false);
-
-        return new Promise((resolve) => {
-          Alert.alert(
-            'Account Exists',
-            'An account with this email already exists. Please sign in instead.',
-            [
-              {
-                text: 'OK',
-                onPress: resolve
-              },
-              {
-                text: 'Go to Sign In',
-                onPress: () => {
-                  resolve();
-                  navigation.navigate('Signin');
-                }
-              }
-            ]
-          );
+        localUser = existingUser;
+      } else {
+        localUser = await User.create({
+          first_name: trimmedFirst,
+          last_name: trimmedLast,
+          email: trimmedEmail,
+          phone_number: null,
+          hms_user: null
         });
       }
 
-      console.log('📝 Creating new user...');
-      const newUser = await User.create({
-        first_name: trimmedFirst,
-        last_name: trimmedLast,
-        email: trimmedEmail,
-        phone_number: null,
-        hms_user: null
-      });
-      console.log('✅ User created:', newUser);
+      // Set local session
+      await Session.setCurrent(localUser.id);
 
-      console.log('🔐 Setting session...');
-      await Session.setCurrent(newUser.id);
-      console.log('✅ Session set');
-
-      Alert.alert(
-        'Account Created!',
-        `Welcome ${trimmedFirst}! Your account has been created successfully.`,
-        [{ text: 'Continue' }]
-      );
+      // Navigate to ERP credentials screen
+      navigation.navigate('ErpCredentials');
 
     } catch (error) {
-      console.error('❌ Signup error:', error);
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Stack trace:', error.stack);
-      Alert.alert('Signup Failed', 'Something went wrong while creating your account. Please try again.');
+      console.error('❌ Signup error:', error.code, error.message);
+
+      const errorMessage = getFirebaseErrorMessage(error.code);
+
+      if (error.code === 'auth/email-already-in-use') {
+        Alert.alert(
+          'Account Exists',
+          errorMessage,
+          [
+            { text: 'OK' },
+            { text: 'Go to Sign In', onPress: () => navigation.navigate('Signin') }
+          ]
+        );
+      } else {
+        Alert.alert('Signup Failed', errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <ScreenWrapper
       headerTitle="DH-Reporting"
@@ -146,10 +164,47 @@ const SignUpScreen = ({ navigation }) => {
           placeholder="Enter your email"
           value={email}
           onChangeText={setEmail}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          editable={!isLoading}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Password</Text>
+        <InputField
+          ref={passwordRef}
+          placeholder="Enter password (min 6 characters)"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+          editable={!isLoading}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Confirm Password</Text>
+        <InputField
+          ref={confirmPasswordRef}
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
           returnKeyType="done"
           onSubmitEditing={handleSignUp}
           editable={!isLoading}
         />
+        {confirmPassword.length > 0 && !passwordsMatch && (
+          <Text style={styles.errorText}>Passwords do not match</Text>
+        )}
       </View>
 
       <View style={styles.buttonContainer}>
@@ -162,7 +217,7 @@ const SignUpScreen = ({ navigation }) => {
         <Text style={styles.helpText}>
           {isLoading
             ? "Please wait while we create your account..."
-            : "You'll be logged in automatically after account creation."
+            : "After signup, you'll set up your ERP credentials."
           }
         </Text>
       </View>
@@ -190,6 +245,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: appStyleConstants.SIZE_56,
     color: appStyleConstants.COLOR_TEXT_MUTED,
+  },
+  errorText: {
+    ...appStyleConstants.STYLE_CAPTION,
+    color: appStyleConstants.COLOR_ERROR || '#E53935',
+    marginTop: appStyleConstants.SIZE_4,
   },
 });
 
