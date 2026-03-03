@@ -28,6 +28,7 @@
     "expo-secure-store": "~14.2.3",
     "expo-sqlite": "~15.2.14",
     "expo-status-bar": "~2.2.3",
+    "firebase": "^12.10.0",
     "knex": "^3.1.0",
     "react": "19.0.0",
     "react-native": "0.79.5",
@@ -36,11 +37,11 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-netinfo": "^1.1.0",
+    "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-sass-transformer": "^3.0.0",
     "react-native-screens": "~4.11.1",
-    "zustand": "^5.0.7",
-    "react-native-reanimated": "~3.17.4"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
