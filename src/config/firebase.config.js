@@ -7,6 +7,6 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api-gateway-dwabxa66vq-uc.a.run.app';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default firebaseConfig;
