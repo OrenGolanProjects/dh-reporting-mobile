@@ -2,12 +2,8 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
-
-const LOCATIONS = [
-  { id: 'HOME', name: 'Home', icon: '🏠' },
-  { id: 'OFFICE', name: 'Office', icon: '🏢' },
-  { id: 'CLIENT', name: 'Client', icon: '👥' }
-];
+import { LOCATIONS } from '../utils/constants';
+import LocationItem from './LocationItem';
 
 export const LocationModal = ({ visible, project, onSelectLocation, onClose }) => {
   if (!visible) return null;
@@ -20,10 +16,12 @@ export const LocationModal = ({ visible, project, onSelectLocation, onClose }) =
       onRequestClose={onClose}
     >
       <View style={modalStyles.overlay}>
-        <TouchableOpacity 
-          style={modalStyles.backdrop} 
-          onPress={onClose} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={modalStyles.backdrop}
+          onPress={onClose}
+          activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel="Close location picker"
         />
         
         <View style={modalStyles.content}>
@@ -34,17 +32,12 @@ export const LocationModal = ({ visible, project, onSelectLocation, onClose }) =
           
           <View style={modalStyles.locationGrid}>
             {LOCATIONS.map((loc) => (
-              <TouchableOpacity
+              <LocationItem
                 key={loc.id}
-                style={modalStyles.locationCard}
-                onPress={() => onSelectLocation(loc.name)}
-                activeOpacity={0.7}
-              >
-                <View style={modalStyles.iconContainer}>
-                  <Text style={modalStyles.locationIcon}>{loc.icon}</Text>
-                </View>
-                <Text style={modalStyles.locationName}>{loc.name}</Text>
-              </TouchableOpacity>
+                location={loc}
+                variant="card"
+                onPress={(location) => onSelectLocation(location.name)}
+              />
             ))}
           </View>
         </View>
@@ -102,34 +95,6 @@ const modalStyles = StyleSheet.create({
   locationGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  locationCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: styles.SIZE_16,
-    marginHorizontal: styles.SIZE_6,
-    borderRadius: styles.RADIUS_LARGE,
-    backgroundColor: styles.COLOR_SURFACE_LIGHT || styles.COLOR_SURFACE,
-    borderWidth: 1,
-    borderColor: styles.COLOR_BORDER,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: styles.RADIUS_LARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: styles.SIZE_12,
-    backgroundColor: styles.COLOR_PRIMARY_ALPHA || 'rgba(16, 185, 129, 0.1)',
-  },
-  locationIcon: {
-    fontSize: 28,
-  },
-  locationName: {
-    fontSize: styles.FONT_SIZE_14,
-    fontWeight: styles.FONT_WEIGHT_MEDIUM,
-    color: styles.COLOR_TEXT_LIGHT,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
   },
 });
 
