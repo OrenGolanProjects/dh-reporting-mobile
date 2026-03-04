@@ -10,6 +10,7 @@ import SecondaryButton from '../components/buttons/SecondaryButton';
 import { validateEmail } from '../utils/validation';
 import { User, Session } from '../orm/models/';
 import { signUpWithEmail } from '../services/firebase';
+import logger from '../utils/logger';
 
 const SignUpScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState('');
@@ -60,11 +61,11 @@ const SignUpScreen = ({ navigation }) => {
 
     setIsLoading(true);
     try {
-      console.log('🔍 Starting Firebase signup process...');
+      logger.log('🔍 Starting Firebase signup process...');
 
       // Create Firebase account
       const userCredential = await signUpWithEmail(trimmedEmail, trimmedPassword);
-      console.log('✅ Firebase account created:', userCredential.user.uid);
+      logger.log('✅ Firebase account created:', userCredential.user.uid);
 
       // Create local user record for offline support
       const existingUser = await User.findBy('email', trimmedEmail);
@@ -89,7 +90,7 @@ const SignUpScreen = ({ navigation }) => {
       navigation.navigate('ErpCredentials');
 
     } catch (error) {
-      console.error('❌ Signup error:', error.code, error.message);
+      logger.error('❌ Signup error:', error.code, error.message);
 
       const errorMessage = getFirebaseErrorMessage(error.code);
 
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...appStyleConstants.STYLE_CAPTION,
-    color: appStyleConstants.COLOR_ERROR || '#E53935',
+    color: appStyleConstants.COLOR_ERROR,
     marginTop: appStyleConstants.SIZE_4,
   },
 });

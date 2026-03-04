@@ -1,6 +1,7 @@
 // src/hooks/useProjects.js
 import { useState, useEffect, useCallback } from 'react';
 import { Project } from '../orm/models';
+import logger from '../utils/logger';
 
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
@@ -16,7 +17,7 @@ export const useProjects = () => {
 
       setProjects(projectList.map(p => new Project(p)));
     } catch (error) {
-      console.error('❌ Error loading projects:', error);
+      logger.error('❌ Error loading projects:', error);
       setProjects([]);
     } finally {
       setIsLoading(false);

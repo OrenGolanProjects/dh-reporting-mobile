@@ -10,11 +10,13 @@ import SignInScreen from '../screens/SignInScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import ErpCredentialsScreen from '../screens/ErpCredentialsScreen';
 import ProjectsScreen from '../screens/ProjectsScreen';
-import NewScreen from '../screens/NewScreen';
-import { ProfileScreen, SettingsScreen, HomeScreen } from '../examples/NavigationExamples';
+import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import ReportsScreen from '../screens/ReportsScreen';
 import { getCurrentUser } from '../database';
 import { Session } from '../orm/models';
 import { onAuthStateChange, signOut as firebaseSignOut } from '../services/firebase';
+import logger from '../utils/logger';
 
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
@@ -41,10 +43,10 @@ const LogoutScreen = () => {
             try {
               await firebaseSignOut();
               await Session.clear();
-              console.log('✅ User logged out successfully');
+              logger.log('✅ User logged out successfully');
               // Firebase onAuthStateChange listener handles navigation
             } catch (error) {
-              console.error('❌ Logout error:', error);
+              logger.error('❌ Logout error:', error);
               setIsLoggingOut(false);
             }
           },
@@ -93,9 +95,6 @@ const ProjectsStackNavigator = () => (
     screenOptions={{ headerShown: false }}
   >
     <MainStack.Screen name="ProjectsList" component={ProjectsScreen} />
-    <MainStack.Screen name="NewScreen" component={NewScreen} />
-    <MainStack.Screen name="ProjectDetails" component={NewScreen} />
-    <MainStack.Screen name="Reports" component={NewScreen} />
   </MainStack.Navigator>
 );
 
@@ -106,7 +105,6 @@ const ProfileStackNavigator = () => (
   >
     <MainStack.Screen name="ProfileMain" component={ProfileScreen} />
     <MainStack.Screen name="Settings" component={SettingsScreen} />
-    <MainStack.Screen name="Home" component={HomeScreen} />
   </MainStack.Navigator>
 );
 
@@ -115,8 +113,7 @@ const ReportsStackNavigator = () => (
     initialRouteName="ReportsList"
     screenOptions={{ headerShown: false }}
   >
-    <MainStack.Screen name="ReportsList" component={NewScreen} />
-    <MainStack.Screen name="ReportDetails" component={NewScreen} />
+    <MainStack.Screen name="ReportsList" component={ReportsScreen} />
   </MainStack.Navigator>
 );
 
@@ -200,7 +197,7 @@ export default function AppNavigator() {
   // Listen to Firebase auth state changes (event-driven, no polling needed)
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
-      console.log('🔥 Firebase auth state changed:', user ? user.email : 'signed out');
+      logger.log('🔥 Firebase auth state changed:', user ? user.email : 'signed out');
       checkAuth();
     });
 
@@ -209,21 +206,21 @@ export default function AppNavigator() {
 
   const checkAuth = async () => {
     try {
-      // Only show splash on initial load
-      if (authState === 'checking') {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+      // Run auth check and minimum splash display in parallel
+      const minSplash = authState === 'checking'
+        ? new Promise(resolve => setTimeout(resolve, 800))
+        : Promise.resolve();
 
-      const user = await getCurrentUser();
+      const [, user] = await Promise.all([minSplash, getCurrentUser()]);
       const newState = user ? 'authenticated' : 'unauthenticated';
 
       if (authState !== newState) {
-        console.log('🔄 Auth changed:', newState);
+        logger.log('🔄 Auth changed:', newState);
         setAuthState(newState);
       }
 
     } catch (error) {
-      console.error('❌ Auth error:', error);
+      logger.error('❌ Auth error:', error);
       if (authState !== 'unauthenticated') {
         setAuthState('unauthenticated');
       }

@@ -11,6 +11,7 @@ import { validateEmail } from '../utils/validation';
 import { User, Session } from '../orm/models/';
 import { signInWithEmail } from '../services/firebase';
 import { checkUserCredentials } from '../services/api';
+import logger from '../utils/logger';
 
 const SignInScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -54,7 +55,7 @@ const SignInScreen = ({ navigation }) => {
     try {
       // Sign in with Firebase
       const userCredential = await signInWithEmail(trimmedEmail, trimmedPassword);
-      console.log('✅ Firebase signin successful:', userCredential.user.uid);
+      logger.log('✅ Firebase signin successful:', userCredential.user.uid);
 
       // Check or create local user for offline support
       let localUser = await User.findBy('email', trimmedEmail);
@@ -81,7 +82,7 @@ const SignInScreen = ({ navigation }) => {
       // If hasCredentials, auth state listener will handle navigation to main app
 
     } catch (error) {
-      console.error('❌ Sign in error:', error.code);
+      logger.error('❌ Sign in error:', error.code);
 
       const errorMessage = getFirebaseErrorMessage(error.code);
 

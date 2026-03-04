@@ -6,6 +6,7 @@ import ScreenWrapper from '../components/wrappers/ScreenWrapper';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { saveUserCredentials } from '../services/api';
+import logger from '../utils/logger';
 
 const ErpCredentialsScreen = ({ route }) => {
   const [employeeCode, setEmployeeCode] = useState('');
@@ -25,12 +26,12 @@ const ErpCredentialsScreen = ({ route }) => {
 
     setIsLoading(true);
     try {
-      console.log('🔐 Saving ERP credentials...');
+      logger.log('🔐 Saving ERP credentials...');
 
       const result = await saveUserCredentials(trimmedCode, trimmedPass);
 
       if (result.success) {
-        console.log('✅ ERP credentials saved successfully');
+        logger.log('✅ ERP credentials saved successfully');
         Alert.alert(
           'Setup Complete',
           'Your ERP credentials have been saved. You can now access the app.',
@@ -53,7 +54,7 @@ const ErpCredentialsScreen = ({ route }) => {
         );
       }
     } catch (error) {
-      console.error('❌ Save credentials error:', error);
+      logger.error('❌ Save credentials error:', error);
       Alert.alert(
         'Error',
         'Something went wrong while saving your credentials. Please try again.',
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
   },
   infoTitle: {
     ...appStyleConstants.STYLE_HEADER_2,
-    color: appStyleConstants.COLOR_TEXT_PRIMARY,
+    color: appStyleConstants.COLOR_TEXT,
     marginBottom: appStyleConstants.SIZE_8,
     textAlign: 'center',
   },

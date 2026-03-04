@@ -1,6 +1,7 @@
 // src/hooks/useUser.js
 import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '../orm/models';
+import logger from '../utils/logger';
 
 export const useUser = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,7 +20,7 @@ export const useUser = () => {
       setCurrentUser(user);
       return user;
     } catch (error) {
-      console.error('❌ Error loading user:', error);
+      logger.error('❌ Error loading user:', error);
       setCurrentUser(null);
       return null;
     } finally {

@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
+import logger from '../utils/logger';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -14,7 +15,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('❌ ErrorBoundary caught:', error, errorInfo);
+    logger.error('❌ ErrorBoundary caught:', error, errorInfo);
   }
 
   handleReset = () => {

@@ -1,4 +1,5 @@
 // src/utils/retry.js
+import logger from './logger';
 
 const DEFAULT_OPTIONS = {
   maxRetries: 3,
@@ -37,7 +38,7 @@ export const withRetry = async (fn, options = {}) => {
         maxDelay
       );
 
-      console.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`);
+      logger.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }

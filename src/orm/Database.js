@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import logger from '../utils/logger';
 
 class Database {
   static db = null;
@@ -7,7 +8,7 @@ class Database {
     if (!Database.db) {
       Database.db = await SQLite.openDatabaseAsync('dh_reporting.db');
       await Database.db.execAsync('PRAGMA foreign_keys = ON;');
-      console.log('✅ ORM: Database initialized');
+      logger.log('✅ ORM: Database initialized');
     }
     return Database.db;
   }

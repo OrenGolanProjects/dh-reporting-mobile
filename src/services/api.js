@@ -3,6 +3,7 @@ import { getIdToken } from './firebase';
 import { getValidToken } from './tokenManager';
 import { API_BASE_URL } from '../config/firebase.config';
 import { withRetry } from '../utils/retry';
+import logger from '../utils/logger';
 
 /**
  * Make an authenticated API request with retry and token refresh
@@ -25,7 +26,7 @@ const authenticatedFetch = async (endpoint, options = {}) => {
       ...options.headers,
     };
 
-    console.log(`📡 API Request: ${options.method || 'GET'} ${endpoint}`);
+    logger.log(`📡 API Request: ${options.method || 'GET'} ${endpoint}`);
 
     const response = await fetch(url, {
       ...options,
@@ -59,20 +60,20 @@ export const saveUserCredentials = async (employeeCode, employeePass) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('❌ Save credentials failed:', data);
+      logger.error('❌ Save credentials failed:', data);
       return {
         success: false,
         message: data.error || data.message || 'Failed to save credentials',
       };
     }
 
-    console.log('✅ Credentials saved successfully');
+    logger.log('✅ Credentials saved successfully');
     return {
       success: true,
       message: data.message || 'Credentials saved successfully',
     };
   } catch (error) {
-    console.error('❌ Save credentials error:', error);
+    logger.error('❌ Save credentials error:', error);
     return {
       success: false,
       message: error.message || 'Network error - please try again',
@@ -96,7 +97,7 @@ export const checkUserCredentials = async () => {
     const data = await response.json();
     return { hasCredentials: data.hasCredentials || false };
   } catch (error) {
-    console.error('❌ Check credentials error:', error);
+    logger.error('❌ Check credentials error:', error);
     return { hasCredentials: false };
   }
 };

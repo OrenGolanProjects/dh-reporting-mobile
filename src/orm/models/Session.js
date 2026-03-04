@@ -1,5 +1,6 @@
 import BaseModel from '../BaseModel';
 import { getDb } from '../../database/db';
+import logger from '../../utils/logger';
 
 class Session extends BaseModel {
   static tableName = 'session';
@@ -27,19 +28,19 @@ class Session extends BaseModel {
           'UPDATE session SET user_id = ?, signed_in_at = ?, last_activity = ? WHERE id = 1',
           [userId, timestamp, timestamp]
         );
-        console.log('✅ Session updated for user:', userId);
+        logger.log('✅ Session updated for user:', userId);
       } else {
         // Create new session
         await db.runAsync(
           'INSERT INTO session (id, user_id, signed_in_at, last_activity) VALUES (?, ?, ?, ?)',
           [1, userId, timestamp, timestamp]
         );
-        console.log('✅ Session created for user:', userId);
+        logger.log('✅ Session created for user:', userId);
       }
       
       return this.getCurrent();
     } catch (error) {
-      console.error('❌ Session.setCurrent error:', error);
+      logger.error('❌ Session.setCurrent error:', error);
       throw error;
     }
   }
@@ -55,12 +56,12 @@ class Session extends BaseModel {
       
       if (existing) {
         await db.runAsync('DELETE FROM session WHERE id = 1');
-        console.log('✅ Session cleared');
+        logger.log('✅ Session cleared');
       }
       
       return true;
     } catch (error) {
-      console.error('❌ Session.clear error:', error);
+      logger.error('❌ Session.clear error:', error);
       throw error;
     }
   }
@@ -72,10 +73,10 @@ class Session extends BaseModel {
         'UPDATE session SET last_activity = ? WHERE id = 1',
         [Date.now()]
       );
-      console.log('✅ Session activity updated');
+      logger.log('✅ Session activity updated');
       return this;
     } catch (error) {
-      console.error('❌ updateActivity error:', error);
+      logger.error('❌ updateActivity error:', error);
       throw error;
     }
   }

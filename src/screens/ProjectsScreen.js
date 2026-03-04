@@ -9,6 +9,7 @@ import { ViewToggle } from '../components/ViewToggle';
 import { LocationModal } from '../components/LocationModal';
 import { ProjectGalleryView } from '../components/ProjectGalleryView';
 import { ProjectListView } from '../components/ProjectListView';
+import logger from '../utils/logger';
 
 const ProjectsScreen = ({ navigation }) => {
   const {
@@ -25,13 +26,6 @@ const ProjectsScreen = ({ navigation }) => {
   const [showLocationMenu, setShowLocationMenu] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const handleSettings = () => navigation.navigate('Profile', { screen: 'Settings' });
-
-  const handleNavigateToComponents = () => {
-    navigation.navigate('NewScreen', {
-      userId: currentUser?.id,
-      projectId: selectedProject?.id
-    });
-  };
 
   const handleProjectPress = (project) => {
     setSelectedProject(project);
@@ -69,7 +63,7 @@ const ProjectsScreen = ({ navigation }) => {
                 setShowLocationMenu(false);
                 setSelectedProject(null);
               } catch (error) {
-                console.error('Failed to switch sessions:', error);
+                logger.error('Failed to switch sessions:', error);
               }
             },
           },
@@ -92,7 +86,6 @@ const ProjectsScreen = ({ navigation }) => {
     }
   };
 
-  // Header Right Component with Settings and Components buttons
   const HeaderRight = () => (
     <View style={styles.headerRight}>
       <TouchableOpacity
@@ -100,12 +93,6 @@ const ProjectsScreen = ({ navigation }) => {
         onPress={handleSettings}
       >
         <Text style={styles.headerButtonText}>⚙️</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={handleNavigateToComponents}
-      >
-        <Text style={styles.headerButtonText}>🎨</Text>
       </TouchableOpacity>
     </View>
   );

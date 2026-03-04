@@ -1,4 +1,5 @@
 import { getDb } from '../db.js';
+import logger from '../../utils/logger';
 
 /**
  * Create a new user in the database
@@ -15,10 +16,10 @@ export async function createUser(userInput) {
       [firstName, lastName, email, phoneNumber || null, hmsUser || null]
     );
     
-    console.log('✅ User created with ID:', result.lastInsertRowId);
+    logger.log('✅ User created with ID:', result.lastInsertRowId);
     return { id: result.lastInsertRowId, ...userInput };
   } catch (error) {
-    console.error('❌ Error creating user:', error);
+    logger.error('❌ Error creating user:', error);
     throw error;
   }
 }
@@ -36,14 +37,14 @@ export async function getUserByEmail(email) {
     );
     
     if (user) {
-      console.log('✅ User found:', user.email);
+      logger.log('✅ User found:', user.email);
     } else {
-      console.log('ℹ️ No user found with email:', email);
+      logger.log('ℹ️ No user found with email:', email);
     }
     
     return user;
   } catch (error) {
-    console.error('❌ Error getting user by email:', error);
+    logger.error('❌ Error getting user by email:', error);
     throw error;
   }
 }
@@ -62,7 +63,7 @@ export async function getUserById(userId) {
     
     return user;
   } catch (error) {
-    console.error('❌ Error getting user by ID:', error);
+    logger.error('❌ Error getting user by ID:', error);
     throw error;
   }
 }
@@ -84,10 +85,10 @@ export async function updateUser(userId, userInput) {
       [firstName, lastName, email, phoneNumber || null, hmsUser || null, userId]
     );
     
-    console.log('✅ User updated successfully');
+    logger.log('✅ User updated successfully');
     return await getUserById(userId);
   } catch (error) {
-    console.error('❌ Error updating user:', error);
+    logger.error('❌ Error updating user:', error);
     throw error;
   }
 }
@@ -100,9 +101,9 @@ export async function deleteUser(userId) {
   try {
     const db = await getDb();
     await db.runAsync(`DELETE FROM users WHERE id = ?`, [userId]);
-    console.log('✅ User deleted successfully');
+    logger.log('✅ User deleted successfully');
   } catch (error) {
-    console.error('❌ Error deleting user:', error);
+    logger.error('❌ Error deleting user:', error);
     throw error;
   }
 }
@@ -116,10 +117,10 @@ export async function getAllUsers() {
     const db = await getDb();
     const users = await db.getAllAsync(`SELECT * FROM users ORDER BY first_name, last_name`);
     
-    console.log(`✅ Found ${users.length} users`);
+    logger.log(`✅ Found ${users.length} users`);
     return users;
   } catch (error) {
-    console.error('❌ Error getting all users:', error);
+    logger.error('❌ Error getting all users:', error);
     throw error;
   }
 }

@@ -84,12 +84,8 @@ const styles = StyleSheet.create({
   drawerContainer: {
     position: 'absolute',
     height: '100%',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: appStyleConstants.COLOR_SURFACE,
+    ...appStyleConstants.SHADOW_LARGE,
   },
 });
 

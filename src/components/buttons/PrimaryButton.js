@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 
 const PrimaryButton = ({ title, onPress, disabled = false, loading = false }) => {
-  const scaleAnim = new Animated.Value(1);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {

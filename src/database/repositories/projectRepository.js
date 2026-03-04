@@ -1,4 +1,5 @@
 import { getDb } from '../db.js';
+import logger from '../../utils/logger';
 
 /**
  * Create a new project
@@ -14,10 +15,10 @@ export async function createProject(projectInput) {
       [name, location, description || null]
     );
     
-    console.log('✅ Project created with ID:', result.lastInsertRowId);
+    logger.log('✅ Project created with ID:', result.lastInsertRowId);
     return { id: result.lastInsertRowId, ...projectInput };
   } catch (error) {
-    console.error('❌ Error creating project:', error);
+    logger.error('❌ Error creating project:', error);
     throw error;
   }
 }
@@ -31,10 +32,10 @@ export async function getAllProjects() {
     const db = await getDb();
     const projects = await db.getAllAsync(`SELECT * FROM projects WHERE is_active = 1 ORDER BY name`);
     
-    console.log(`✅ Found ${projects.length} projects`);
+    logger.log(`✅ Found ${projects.length} projects`);
     return projects;
   } catch (error) {
-    console.error('❌ Error getting all projects:', error);
+    logger.error('❌ Error getting all projects:', error);
     throw error;
   }
 }
@@ -51,10 +52,10 @@ export async function getProjectsByLocation(location) {
       [location]
     );
     
-    console.log(`✅ Found ${projects.length} projects for location ${location}`);
+    logger.log(`✅ Found ${projects.length} projects for location ${location}`);
     return projects;
   } catch (error) {
-    console.error('❌ Error getting projects by location:', error);
+    logger.error('❌ Error getting projects by location:', error);
     throw error;
   }
 }
@@ -73,7 +74,7 @@ export async function getProjectById(projectId) {
     
     return project;
   } catch (error) {
-    console.error('❌ Error getting project by ID:', error);
+    logger.error('❌ Error getting project by ID:', error);
     throw error;
   }
 }
@@ -95,10 +96,10 @@ export async function updateProject(projectId, projectInput) {
       [name, location, description || null, isActive !== undefined ? isActive : 1, projectId]
     );
     
-    console.log('✅ Project updated successfully');
+    logger.log('✅ Project updated successfully');
     return await getProjectById(projectId);
   } catch (error) {
-    console.error('❌ Error updating project:', error);
+    logger.error('❌ Error updating project:', error);
     throw error;
   }
 }
@@ -114,9 +115,9 @@ export async function deactivateProject(projectId) {
       `UPDATE projects SET is_active = 0, updated_at = strftime('%s', 'now') * 1000 WHERE id = ?`,
       [projectId]
     );
-    console.log('✅ Project deactivated successfully');
+    logger.log('✅ Project deactivated successfully');
   } catch (error) {
-    console.error('❌ Error deactivating project:', error);
+    logger.error('❌ Error deactivating project:', error);
     throw error;
   }
 }
@@ -132,9 +133,9 @@ export async function activateProject(projectId) {
       `UPDATE projects SET is_active = 1, updated_at = strftime('%s', 'now') * 1000 WHERE id = ?`,
       [projectId]
     );
-    console.log('✅ Project activated successfully');
+    logger.log('✅ Project activated successfully');
   } catch (error) {
-    console.error('❌ Error activating project:', error);
+    logger.error('❌ Error activating project:', error);
     throw error;
   }
 }
@@ -147,9 +148,9 @@ export async function deleteProject(projectId) {
   try {
     const db = await getDb();
     await db.runAsync(`DELETE FROM projects WHERE id = ?`, [projectId]);
-    console.log('✅ Project deleted successfully');
+    logger.log('✅ Project deleted successfully');
   } catch (error) {
-    console.error('❌ Error deleting project:', error);
+    logger.error('❌ Error deleting project:', error);
     throw error;
   }
 }
@@ -168,10 +169,10 @@ export async function searchProjects(searchTerm) {
       [`%${searchTerm}%`]
     );
     
-    console.log(`✅ Found ${projects.length} projects matching "${searchTerm}"`);
+    logger.log(`✅ Found ${projects.length} projects matching "${searchTerm}"`);
     return projects;
   } catch (error) {
-    console.error('❌ Error searching projects:', error);
+    logger.error('❌ Error searching projects:', error);
     throw error;
   }
 }

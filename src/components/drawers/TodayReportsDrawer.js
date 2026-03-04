@@ -11,6 +11,7 @@ import {
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import SideDrawer from './SideDrawer';
 import { getTodayWorkSessions } from '../../database';
+import logger from '../../utils/logger';
 
 const TodayReportsDrawer = ({ 
   isOpen, 
@@ -47,7 +48,7 @@ const TodayReportsDrawer = ({
       const sessions = await getTodayWorkSessions(currentUser.id, startOfDay, endOfDay);
       setTodayReports(sessions || []);
     } catch (error) {
-      console.error('Error loading today reports:', error);
+      logger.error('Error loading today reports:', error);
       if (onError) {
         onError('Failed to load today\'s reports');
       }
@@ -155,7 +156,7 @@ const TodayReportsDrawer = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[appStyleConstants.COLOR_PRIMARY || '#007AFF']}
+            colors={[appStyleConstants.COLOR_PRIMARY]}
           />
         }
       >
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: appStyleConstants.SIZE_16,
     paddingTop: appStyleConstants.SIZE_20,
-    backgroundColor: appStyleConstants.COLOR_PRIMARY || '#007AFF',
+    backgroundColor: appStyleConstants.COLOR_PRIMARY,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -247,21 +248,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    fontSize: appStyleConstants.FONT_SIZE_20,
+    fontWeight: appStyleConstants.FONT_WEIGHT_BOLD,
+    color: appStyleConstants.COLOR_TEXT,
+    marginBottom: appStyleConstants.SIZE_4,
   },
   date: {
-    fontSize: 14,
-    color: '#FFFFFF',
+    fontSize: appStyleConstants.FONT_SIZE_14,
+    color: appStyleConstants.COLOR_TEXT,
     opacity: 0.9,
-    marginBottom: 4,
+    marginBottom: appStyleConstants.SIZE_4,
   },
   totalHours: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+    color: appStyleConstants.COLOR_TEXT,
   },
   closeButton: {
     width: 32,
@@ -273,123 +274,120 @@ const styles = StyleSheet.create({
     marginLeft: appStyleConstants.SIZE_12,
   },
   closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: appStyleConstants.COLOR_TEXT,
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    fontWeight: appStyleConstants.FONT_WEIGHT_BOLD,
   },
   content: {
     flex: 1,
+    backgroundColor: appStyleConstants.COLOR_DARK,
   },
   loadingContainer: {
     padding: appStyleConstants.SIZE_32,
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
   },
   emptyContainer: {
     padding: appStyleConstants.SIZE_32,
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#999999',
+    fontSize: appStyleConstants.FONT_SIZE_18,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+    color: appStyleConstants.COLOR_TEXT_SUBTLE,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: appStyleConstants.SIZE_8,
   },
   emptySubText: {
-    fontSize: 14,
-    color: '#BBBBBB',
+    fontSize: appStyleConstants.FONT_SIZE_14,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
     textAlign: 'center',
   },
   summaryContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: appStyleConstants.SIZE_16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: appStyleConstants.COLOR_SURFACE_LIGHT,
     margin: appStyleConstants.SIZE_16,
-    borderRadius: 12,
+    borderRadius: appStyleConstants.RADIUS_LARGE,
   },
   statItem: {
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: appStyleConstants.COLOR_PRIMARY || '#007AFF',
+    fontSize: appStyleConstants.FONT_SIZE_24,
+    fontWeight: appStyleConstants.FONT_WEIGHT_BOLD,
+    color: appStyleConstants.COLOR_PRIMARY,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#666666',
-    marginTop: 4,
+    fontSize: appStyleConstants.FONT_SIZE_12,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    marginTop: appStyleConstants.SIZE_4,
   },
   reportsContainer: {
     padding: appStyleConstants.SIZE_16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
     marginBottom: appStyleConstants.SIZE_12,
   },
   reportItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: appStyleConstants.COLOR_SURFACE,
+    borderRadius: appStyleConstants.RADIUS_LARGE,
     padding: appStyleConstants.SIZE_16,
     marginBottom: appStyleConstants.SIZE_12,
     borderLeftWidth: 4,
-    borderLeftColor: appStyleConstants.COLOR_PRIMARY || '#007AFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderLeftColor: appStyleConstants.COLOR_PRIMARY,
+    ...appStyleConstants.SHADOW_SMALL,
   },
   reportHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: appStyleConstants.SIZE_8,
   },
   projectName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
     flex: 1,
-    marginRight: 8,
+    marginRight: appStyleConstants.SIZE_8,
   },
   durationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   duration: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: appStyleConstants.COLOR_PRIMARY || '#007AFF',
+    fontSize: appStyleConstants.FONT_SIZE_14,
+    fontWeight: appStyleConstants.FONT_WEIGHT_BOLD,
+    color: appStyleConstants.COLOR_PRIMARY,
   },
   inProgress: {
-    color: '#FF6B35',
+    color: appStyleConstants.COLOR_ACCENT,
   },
   activeDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF6B35',
-    marginLeft: 6,
+    backgroundColor: appStyleConstants.COLOR_ACCENT,
+    marginLeft: appStyleConstants.SIZE_6,
   },
   reportDetails: {
-    marginTop: 4,
+    marginTop: appStyleConstants.SIZE_4,
   },
   timeRange: {
     fontSize: 13,
-    color: '#666666',
-    marginBottom: 4,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    marginBottom: appStyleConstants.SIZE_4,
   },
   notes: {
-    fontSize: 12,
-    color: '#888888',
+    fontSize: appStyleConstants.FONT_SIZE_12,
+    color: appStyleConstants.COLOR_TEXT_SUBTLE,
     fontStyle: 'italic',
     lineHeight: 16,
   },
