@@ -2,17 +2,20 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { Project, WorkSession } from '../orm/models';
+import Database from '../orm/Database';
 import logger from '../utils/logger';
 
 export const useActiveSession = (userId) => {
   const [activeSession, setActiveSession] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const loadActiveSession = useCallback(async () => {
     if (!userId) return;
 
     try {
       setIsLoading(true);
+      setError(null);
       const activeWork = await WorkSession.query()
         .where('user_id', userId)
         .whereNull('end_work_time')
@@ -21,15 +24,13 @@ export const useActiveSession = (userId) => {
       if (activeWork) {
         const project = await Project.find(activeWork.project_id);
         activeWork.project_name = project?.name || 'Unknown Project';
-        if (activeWork.notes && activeWork.notes.includes(' - ')) {
-          const location = activeWork.notes.split(' - ')[1];
-          activeWork.active_location = location;
-        }
+        activeWork.active_location = activeWork.location || null;
       }
 
       setActiveSession(activeWork);
-    } catch (error) {
-      logger.error('❌ Error loading active session:', error);
+    } catch (err) {
+      logger.error('❌ Error loading active session:', err);
+      setError(err);
       setActiveSession(null);
     } finally {
       setIsLoading(false);
@@ -44,7 +45,8 @@ export const useActiveSession = (userId) => {
         start_work_time: when.getTime(),
         end_work_time: null,
         break_time: 0,
-        notes: `Started via mobile app - ${location}`
+        location,
+        notes: 'Started via mobile app'
       });
 
       const project = await Project.find(projectId);
@@ -88,14 +90,16 @@ export const useActiveSession = (userId) => {
 
   const handleSessionSwitch = useCallback(async (projectId, location, when) => {
     try {
-      if (activeSession) {
-        const session = await WorkSession.find(activeSession.id);
-        await session.update({
-          end_work_time: when.getTime(),
-          notes: session.notes + ' | Switched to another task'
-        });
-        setActiveSession(null);
-      }
+      await Database.transaction(async () => {
+        if (activeSession) {
+          const session = await WorkSession.find(activeSession.id);
+          await session.update({
+            end_work_time: when.getTime(),
+            notes: session.notes + ' | Switched to another task'
+          });
+          setActiveSession(null);
+        }
+      });
 
       const newSession = await startNewSession(projectId, location, when);
       return newSession;
@@ -109,6 +113,7 @@ export const useActiveSession = (userId) => {
   return {
     activeSession,
     isLoading,
+    error,
     startNewSession,
     endSession,
     handleSessionSwitch,
