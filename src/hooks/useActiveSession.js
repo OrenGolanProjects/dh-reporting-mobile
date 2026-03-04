@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { Project, WorkSession } from '../orm/models';
+import logger from '../utils/logger';
 
 export const useActiveSession = (userId) => {
   const [activeSession, setActiveSession] = useState(null);
@@ -28,7 +29,7 @@ export const useActiveSession = (userId) => {
 
       setActiveSession(activeWork);
     } catch (error) {
-      console.error('❌ Error loading active session:', error);
+      logger.error('❌ Error loading active session:', error);
       setActiveSession(null);
     } finally {
       setIsLoading(false);
@@ -55,7 +56,7 @@ export const useActiveSession = (userId) => {
 
       return newSession;
     } catch (error) {
-      console.error('❌ Error starting session:', error);
+      logger.error('❌ Error starting session:', error);
       Alert.alert('Error', 'Failed to start work session.');
       throw error;
     }
@@ -79,7 +80,7 @@ export const useActiveSession = (userId) => {
 
       return true;
     } catch (error) {
-      console.error('❌ Error ending session:', error);
+      logger.error('❌ Error ending session:', error);
       Alert.alert('Error', 'Failed to end session.');
       throw error;
     }
@@ -99,7 +100,7 @@ export const useActiveSession = (userId) => {
       const newSession = await startNewSession(projectId, location, when);
       return newSession;
     } catch (error) {
-      console.error('❌ Error switching sessions:', error);
+      logger.error('❌ Error switching sessions:', error);
       Alert.alert('Error', 'Failed to switch sessions.');
       throw error;
     }
