@@ -140,6 +140,7 @@ const SignUpScreen = ({ navigation }) => {
           onSubmitEditing={() => lastRef.current?.focus()}
           autoFocus
           editable={!isLoading}
+          accessibilityLabel="First Name"
         />
       </View>
 
@@ -155,6 +156,7 @@ const SignUpScreen = ({ navigation }) => {
           blurOnSubmit={false}
           onSubmitEditing={() => emailRef.current?.focus()}
           editable={!isLoading}
+          accessibilityLabel="Last Name"
         />
       </View>
 
@@ -169,6 +171,7 @@ const SignUpScreen = ({ navigation }) => {
           blurOnSubmit={false}
           onSubmitEditing={() => passwordRef.current?.focus()}
           editable={!isLoading}
+          accessibilityLabel="Email"
         />
       </View>
 
@@ -186,6 +189,7 @@ const SignUpScreen = ({ navigation }) => {
           blurOnSubmit={false}
           onSubmitEditing={() => confirmPasswordRef.current?.focus()}
           editable={!isLoading}
+          accessibilityLabel="Password"
         />
       </View>
 
@@ -202,6 +206,7 @@ const SignUpScreen = ({ navigation }) => {
           returnKeyType="done"
           onSubmitEditing={handleSignUp}
           editable={!isLoading}
+          accessibilityLabel="Confirm Password"
         />
         {confirmPassword.length > 0 && !passwordsMatch && (
           <Text style={styles.errorText}>Passwords do not match</Text>

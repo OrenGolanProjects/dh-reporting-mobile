@@ -6,18 +6,21 @@ import logger from '../utils/logger';
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadProjects = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const projectList = await Project.query()
         .where('is_active', 1)
         .orderBy('name')
         .get();
 
       setProjects(projectList.map(p => new Project(p)));
-    } catch (error) {
-      logger.error('❌ Error loading projects:', error);
+    } catch (err) {
+      logger.error('❌ Error loading projects:', err);
+      setError(err);
       setProjects([]);
     } finally {
       setIsLoading(false);
@@ -28,5 +31,5 @@ export const useProjects = () => {
     loadProjects();
   }, [loadProjects]);
 
-  return { projects, isLoading, refreshProjects: loadProjects };
+  return { projects, isLoading, error, refreshProjects: loadProjects };
 };

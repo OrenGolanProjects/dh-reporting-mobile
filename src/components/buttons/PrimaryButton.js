@@ -34,6 +34,9 @@ const PrimaryButton = ({ title, onPress, disabled = false, loading = false }) =>
         onPressOut={handlePressOut}
         disabled={disabled || loading}
         activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ disabled: disabled || loading }}
       >
         <Text style={[buttonStyles.text, disabled && buttonStyles.disabledText]}>
           {loading ? 'Loading...' : title}

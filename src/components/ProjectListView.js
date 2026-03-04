@@ -2,14 +2,9 @@
 import React, { useCallback, memo } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
-import { LOCATION } from '../utils/constants';
+import { LOCATIONS } from '../utils/constants';
 import EmptyState from './EmptyState';
-
-const LOCATIONS = [
-  { id: LOCATION.HOME, name: 'Home', icon: '🏠' },
-  { id: LOCATION.OFFICE, name: 'Office', icon: '🏢' },
-  { id: LOCATION.CLIENT, name: 'Client', icon: '👥' }
-];
+import LocationItem from './LocationItem';
 
 const ProjectListItem = memo(function ProjectListItem({ project, activeSession, onLocationPress, onProjectPress }) {
   const isProjectActive = activeSession?.project_id === project.id;
@@ -39,6 +34,9 @@ const ProjectListItem = memo(function ProjectListItem({ project, activeSession, 
         onPress={() => onProjectPress && onProjectPress(project)}
         disabled={isProjectDisabled}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={project.name}
+        accessibilityState={{ disabled: isProjectDisabled }}
       >
         <View style={listStyles.projectTitleRow}>
           {isProjectActive && (
@@ -65,31 +63,14 @@ const ProjectListItem = memo(function ProjectListItem({ project, activeSession, 
             activeSession.active_location === location.name);
 
           return (
-            <TouchableOpacity
+            <LocationItem
               key={`${project.id}-${location.id}`}
-              style={[
-                listStyles.locationButton,
-                isLocationActive && listStyles.locationButtonActive,
-                isProjectDisabled && listStyles.locationButtonDisabled
-              ]}
-              onPress={() => handleLocationPress(location)}
-              disabled={isProjectDisabled}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                listStyles.locationIcon,
-                isLocationActive && listStyles.locationIconActive,
-              ]}>
-                {location.icon}
-              </Text>
-              <Text style={[
-                listStyles.locationText,
-                isLocationActive && listStyles.locationTextActive,
-                isProjectDisabled && listStyles.locationTextDisabled
-              ]}>
-                {location.name}
-              </Text>
-            </TouchableOpacity>
+              location={location}
+              variant="button"
+              isActive={isLocationActive}
+              isDisabled={isProjectDisabled}
+              onPress={handleLocationPress}
+            />
           );
         })}
       </View>
@@ -210,47 +191,6 @@ const listStyles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     marginHorizontal: -styles.SIZE_4,
-  },
-  locationButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: styles.COLOR_DARK,
-    borderRadius: styles.RADIUS_MEDIUM,
-    paddingVertical: styles.SIZE_12,
-    paddingHorizontal: styles.SIZE_8,
-    marginHorizontal: styles.SIZE_4,
-    borderWidth: 1,
-    borderColor: styles.COLOR_BORDER,
-  },
-  locationButtonActive: {
-    backgroundColor: styles.COLOR_PRIMARY,
-    borderColor: styles.COLOR_PRIMARY,
-  },
-  locationButtonDisabled: {
-    backgroundColor: styles.COLOR_DARK,
-    opacity: 0.5,
-  },
-  locationIcon: {
-    fontSize: 20,
-    marginRight: styles.SIZE_6,
-  },
-  locationIconActive: {
-    // Icon stays same when active
-  },
-  locationText: {
-    fontSize: styles.FONT_SIZE_14,
-    fontWeight: styles.FONT_WEIGHT_MEDIUM,
-    color: styles.COLOR_TEXT_MUTED,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
-  },
-  locationTextActive: {
-    color: styles.COLOR_WHITE,
-    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
-  },
-  locationTextDisabled: {
-    color: styles.COLOR_TEXT_SUBTLE,
   },
   separator: {
     height: 1,

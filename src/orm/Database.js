@@ -13,6 +13,19 @@ class Database {
     return Database.db;
   }
   
+  static async transaction(callback) {
+    const db = await Database.getInstance();
+    try {
+      await db.execAsync('BEGIN TRANSACTION');
+      const result = await callback(db);
+      await db.execAsync('COMMIT');
+      return result;
+    } catch (error) {
+      await db.execAsync('ROLLBACK');
+      throw error;
+    }
+  }
+
   static async close() {
     if (Database.db) {
       await Database.db.closeAsync();

@@ -1,127 +1,56 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
-import logger from '../../utils/logger';
 
-const HiveButton = ({ 
-  projectId, 
-  projectName, 
-  location, 
-  onStart, 
-  onEnd, 
-  isActive,
-  isDisabled, // NEW: disable when other buttons are active
+const HiveButton = ({
+  projectName,
+  location,
+  status = 'idle', // 'idle' | 'starting' | 'started' | 'ending'
+  onPress,
+  isDisabled,
   elapsedTime,
-  width = "100%", 
-  height = 80 
+  width = '100%',
+  height = 80,
 }) => {
-  const [internalStatus, setInternalStatus] = useState('idle');
-
-  // Sync internal status with parent's isActive prop
-  useEffect(() => {
-    if (isActive && internalStatus !== 'started') {
-      setInternalStatus('started');
-    } else if (!isActive && internalStatus === 'started') {
-      setInternalStatus('idle');
-    }
-  }, [isActive]);
-
-  const handlePress = useCallback(async () => {
-    // Don't allow press if disabled or in transition
-    if (isDisabled || internalStatus === 'starting' || internalStatus === 'ending') {
-      return;
-    }
-
-    const now = new Date();
-    
-    logger.log(`[Button] ${projectName} (${location}) pressed, isActive: ${isActive}, isDisabled: ${isDisabled}`);
-    
-    if (isActive) {
-      // End the current session - don't calculate startAt, let parent handle it
-      setInternalStatus('ending');
-      try {
-        await onEnd({
-          projectId,
-          location,
-          endAt: now
-          // Remove startAt - the parent has the real start time from database
-        });
-        setInternalStatus('idle');
-      } catch (error) {
-        logger.error('Error ending session:', error);
-        setInternalStatus('started'); // Revert on error
-      }
-    } else {
-      // Start a new session
-      setInternalStatus('starting');
-      try {
-        await onStart({
-          projectId,
-          location,
-          startAt: now
-        });
-        setInternalStatus('started');
-      } catch (error) {
-        logger.error('Error starting session:', error);
-        setInternalStatus('idle'); // Revert on error
-      }
-    }
-  }, [isActive, isDisabled, projectId, location, projectName, onStart, onEnd, internalStatus]);
-
-  // Helper function to parse elapsed time string to seconds
-  const parseElapsedTime = (timeString) => {
-    if (!timeString) return 0;
-    const [hours, minutes, seconds] = timeString.split(':').map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  };
+  const isActive = status === 'started';
+  const isTransitioning = status === 'starting' || status === 'ending';
+  const buttonDisabled = isDisabled || isTransitioning;
 
   const getButtonStyle = () => {
     const baseStyle = [styles.button, { width, height }];
-    
-    if (isDisabled) {
-      return [...baseStyle, styles.disabledButton];
-    }
-    
-    if (isActive) {
-      return [...baseStyle, styles.activeButton];
-    }
-    
+    if (isDisabled) return [...baseStyle, styles.disabledButton];
+    if (isActive) return [...baseStyle, styles.activeButton];
     return baseStyle;
   };
 
   const getButtonText = () => {
-    if (internalStatus === 'starting') return 'Starting...';
-    if (internalStatus === 'ending') return 'Ending...';
+    if (status === 'starting') return 'Starting...';
+    if (status === 'ending') return 'Ending...';
     if (isActive && elapsedTime) return elapsedTime;
     return location;
   };
 
   const getTextStyle = () => {
-    if (isDisabled) {
-      return styles.disabledText;
-    }
-    if (isActive) {
-      return styles.activeText;
-    }
+    if (isDisabled) return styles.disabledText;
+    if (isActive) return styles.activeText;
     return styles.locationText;
   };
 
   const getProjectNameStyle = () => {
-    if (isDisabled) {
-      return [styles.projectName, styles.disabledText];
-    }
-    if (isActive) {
-      return [styles.projectName, styles.activeText];
-    }
+    if (isDisabled) return [styles.projectName, styles.disabledText];
+    if (isActive) return [styles.projectName, styles.activeText];
     return styles.projectName;
   };
 
   return (
     <TouchableOpacity
       style={getButtonStyle()}
-      onPress={handlePress}
-      disabled={isDisabled || internalStatus === 'starting' || internalStatus === 'ending'}
+      onPress={onPress}
+      disabled={buttonDisabled}
       activeOpacity={isDisabled ? 1 : 0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${projectName} ${location}`}
+      accessibilityState={{ disabled: buttonDisabled, selected: isActive }}
     >
       <View style={styles.content}>
         <Text style={getProjectNameStyle()} numberOfLines={1}>

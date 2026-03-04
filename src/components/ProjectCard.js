@@ -5,7 +5,7 @@ import CardWrapper from './wrappers/CardWrapper';
 import StatusBadge from './StatusBadge';
 import HiveButton from './buttons/HiveButton';
 
-const ProjectCard = ({ project, locations = [], onStart, onEnd }) => {
+const ProjectCard = ({ project, locations = [], onLocationPress }) => {
   return (
     <CardWrapper
       headerLeft={
@@ -20,11 +20,9 @@ const ProjectCard = ({ project, locations = [], onStart, onEnd }) => {
           {locations.map((loc) => (
             <HiveButton
               key={`${project.id}-${loc}`}
-              projectId={project.id}
               projectName={project.name}
               location={loc}
-              onStart={onStart}
-              onEnd={onEnd}
+              onPress={() => onLocationPress?.(project, loc)}
             />
           ))}
         </View>

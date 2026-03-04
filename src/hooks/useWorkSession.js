@@ -5,11 +5,12 @@ import { useProjects } from './useProjects';
 import { useActiveSession } from './useActiveSession';
 
 export const useWorkSession = (navigation) => {
-  const { currentUser, isLoading: isUserLoading, refreshUser } = useUser();
-  const { projects, isLoading: isProjectsLoading, refreshProjects } = useProjects();
+  const { currentUser, isLoading: isUserLoading, error: userError, refreshUser } = useUser();
+  const { projects, isLoading: isProjectsLoading, error: projectsError, refreshProjects } = useProjects();
   const {
     activeSession,
     isLoading: isSessionLoading,
+    error: sessionError,
     startNewSession,
     endSession,
     handleSessionSwitch,
@@ -39,6 +40,7 @@ export const useWorkSession = (navigation) => {
     currentUser,
     activeSession,
     isLoading: isUserLoading || isProjectsLoading || isSessionLoading,
+    error: userError || projectsError || sessionError,
     startNewSession,
     endSession,
     handleSessionSwitch,

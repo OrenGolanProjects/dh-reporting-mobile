@@ -3,12 +3,9 @@ import React, { useCallback, memo } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 import EmptyState from './EmptyState';
+import { LOCATIONS } from '../utils/constants';
 
-const LOCATION_ICONS = {
-  'Home': '🏠',
-  'Office': '🏢',
-  'Client': '👥'
-};
+const LOCATION_ICONS = Object.fromEntries(LOCATIONS.map(l => [l.name, l.icon]));
 
 // Get screen width for proper tile sizing
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -34,6 +31,9 @@ const GalleryTile = memo(function GalleryTile({ project, activeSession, onProjec
         disabled={isDisabled}
         activeOpacity={0.8}
         delayPressIn={50}
+        accessibilityRole="button"
+        accessibilityLabel={project.name}
+        accessibilityState={{ disabled: isDisabled, selected: isActive }}
       >
         <View style={[
           galleryStyles.tileContent,
