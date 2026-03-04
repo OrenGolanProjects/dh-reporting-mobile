@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
+import logger from '../../utils/logger';
 
 const HiveButton = ({ 
   projectId, 
@@ -33,7 +34,7 @@ const HiveButton = ({
 
     const now = new Date();
     
-    console.log(`[Button] ${projectName} (${location}) pressed, isActive: ${isActive}, isDisabled: ${isDisabled}`);
+    logger.log(`[Button] ${projectName} (${location}) pressed, isActive: ${isActive}, isDisabled: ${isDisabled}`);
     
     if (isActive) {
       // End the current session - don't calculate startAt, let parent handle it
@@ -47,7 +48,7 @@ const HiveButton = ({
         });
         setInternalStatus('idle');
       } catch (error) {
-        console.error('Error ending session:', error);
+        logger.error('Error ending session:', error);
         setInternalStatus('started'); // Revert on error
       }
     } else {
@@ -61,7 +62,7 @@ const HiveButton = ({
         });
         setInternalStatus('started');
       } catch (error) {
-        console.error('Error starting session:', error);
+        logger.error('Error starting session:', error);
         setInternalStatus('idle'); // Revert on error
       }
     }
@@ -146,12 +147,12 @@ const styles = StyleSheet.create({
     ...appStyleConstants.SHADOW_BOX_2,
   },
   activeButton: {
-    backgroundColor: appStyleConstants.COLOR_TIMER_ACTIVE,
+    backgroundColor: appStyleConstants.COLOR_PRIMARY_DARK,
     borderColor: appStyleConstants.COLOR_SECONDARY,
   },
   disabledButton: {
     backgroundColor: appStyleConstants.COLOR_DARK,
-    borderColor: appStyleConstants.COLOR_MUTED,
+    borderColor: appStyleConstants.COLOR_BORDER,
     opacity: 0.5,
   },
   content: {

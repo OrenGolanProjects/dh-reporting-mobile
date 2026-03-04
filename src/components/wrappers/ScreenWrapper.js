@@ -192,40 +192,40 @@ const styles = StyleSheet.create({
   // HEADER TEXT STYLES
   // ============================================================================
   headerTitle: {
-    fontSize: appStyleConstants.FONT_SIZE_22, // ✅ SLIGHTLY SMALLER from 24
+    fontSize: 22, // Slightly smaller than FONT_SIZE_24
     fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
     color: appStyleConstants.COLOR_TEXT_LIGHT,
-    marginBottom: appStyleConstants.SIZE_2, // ✅ REDUCED from SIZE_4
+    marginBottom: appStyleConstants.SIZE_2,
     fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
-    lineHeight: 28, // ✅ TIGHTER line height
+    lineHeight: 28,
   },
 
   headerTitleCompact: {
-    fontSize: appStyleConstants.FONT_SIZE_20, // ✅ Smaller for compact
+    fontSize: appStyleConstants.FONT_SIZE_20,
     lineHeight: 24,
-    marginBottom: appStyleConstants.SIZE_1,
+    marginBottom: 1,
   },
 
   headerTitleMinimal: {
-    fontSize: appStyleConstants.FONT_SIZE_18, // ✅ Smallest for minimal
+    fontSize: appStyleConstants.FONT_SIZE_18,
     lineHeight: 22,
     marginBottom: 0,
   },
 
   headerSubtitle: {
-    fontSize: appStyleConstants.FONT_SIZE_13, // ✅ SLIGHTLY SMALLER from 14
+    fontSize: 13, // Between FONT_SIZE_12 and FONT_SIZE_14
     color: appStyleConstants.COLOR_TEXT_MUTED,
     fontFamily: appStyleConstants.FONT_FAMILY_MONTSERRAT,
-    lineHeight: 18, // ✅ TIGHTER line height
+    lineHeight: 18,
   },
 
   headerSubtitleCompact: {
-    fontSize: appStyleConstants.FONT_SIZE_12, // ✅ Smaller for compact
+    fontSize: appStyleConstants.FONT_SIZE_12,
     lineHeight: 16,
   },
 
   headerSubtitleMinimal: {
-    fontSize: appStyleConstants.FONT_SIZE_11, // ✅ Smallest for minimal
+    fontSize: 11, // Smallest for minimal
     lineHeight: 14,
   },
 
