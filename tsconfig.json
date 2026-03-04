@@ -5,6 +5,7 @@
     "allowJs": true,
     "checkJs": false,
     "jsx": "react-native",
+    "module": "esnext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "resolveJsonModule": true,
