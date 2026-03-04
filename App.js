@@ -8,9 +8,24 @@ import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { initDatabase, runMigrations } from './src/database';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
+import logger from './src/utils/logger';
 
-// Hide all yellow warning boxes for a clean production-like view
-LogBox.ignoreAllLogs(true);
+// Suppress all warnings in production; show targeted ignores in dev
+if (!__DEV__) {
+  LogBox.ignoreAllLogs(true);
+} else {
+  LogBox.ignoreLogs([
+    'Setting a timer',
+    'AsyncStorage has been extracted',
+  ]);
+}
+
+// Global handler for unhandled promise rejections
+const defaultHandler = ErrorUtils.getGlobalHandler();
+ErrorUtils.setGlobalHandler((error, isFatal) => {
+  logger.error('Global error:', error, isFatal ? '(FATAL)' : '');
+  defaultHandler(error, isFatal);
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +46,7 @@ const useDatabaseSetup = () => {
         await runMigrations();
         setStatus({ ready: true, error: null });
       } catch (error) {
-        console.error('Database setup failed:', error);
+        logger.error('Database setup failed:', error);
         setStatus({ ready: true, error: error.message });
       }
     };
