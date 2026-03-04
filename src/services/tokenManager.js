@@ -1,4 +1,5 @@
 // src/services/tokenManager.js
+import logger from '../utils/logger';
 
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000; // Refresh 5 minutes before expiry
 
@@ -39,10 +40,10 @@ export const getValidToken = async () => {
 
     scheduleTokenRefresh();
 
-    console.log('🔑 Token refreshed, expires:', new Date(tokenExpirationTime).toLocaleTimeString());
+    logger.log('🔑 Token refreshed, expires:', new Date(tokenExpirationTime).toLocaleTimeString());
     return cachedToken;
   } catch (error) {
-    console.error('❌ Token refresh failed:', error);
+    logger.error('❌ Token refresh failed:', error);
     cachedToken = null;
     tokenExpirationTime = null;
     throw error;
@@ -65,9 +66,9 @@ const scheduleTokenRefresh = () => {
     refreshTimer = setTimeout(async () => {
       try {
         await getValidToken();
-        console.log('🔄 Token proactively refreshed');
+        logger.log('🔄 Token proactively refreshed');
       } catch (error) {
-        console.error('❌ Scheduled token refresh failed:', error);
+        logger.error('❌ Scheduled token refresh failed:', error);
       }
     }, refreshIn);
   }

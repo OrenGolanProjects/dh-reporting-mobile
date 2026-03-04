@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import firebaseConfig from '../config/firebase.config';
 import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
 import { clearTokenCache, initTokenManager } from './tokenManager';
+import logger from '../utils/logger';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -29,10 +30,10 @@ initTokenManager(() => auth);
 export const signUpWithEmail = async (email, password) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log('✅ Firebase signup successful:', userCredential.user.email);
+    logger.log('✅ Firebase signup successful');
     return userCredential;
   } catch (error) {
-    console.error('❌ Firebase signup error:', error.code, error.message);
+    logger.error('❌ Firebase signup error:', error.code);
     error.userMessage = getFirebaseErrorMessage(error);
     throw error;
   }
@@ -44,10 +45,10 @@ export const signUpWithEmail = async (email, password) => {
 export const signInWithEmail = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log('✅ Firebase signin successful:', userCredential.user.email);
+    logger.log('✅ Firebase signin successful');
     return userCredential;
   } catch (error) {
-    console.error('❌ Firebase signin error:', error.code, error.message);
+    logger.error('❌ Firebase signin error:', error.code);
     error.userMessage = getFirebaseErrorMessage(error);
     throw error;
   }
@@ -59,14 +60,14 @@ export const signInWithEmail = async (email, password) => {
 export const getIdToken = async () => {
   const user = auth.currentUser;
   if (!user) {
-    console.warn('⚠️ No authenticated user for getIdToken');
+    logger.warn('⚠️ No authenticated user for getIdToken');
     return null;
   }
   try {
     const token = await user.getIdToken();
     return token;
   } catch (error) {
-    console.error('❌ Error getting ID token:', error);
+    logger.error('❌ Error getting ID token:', error);
     throw error;
   }
 };
@@ -78,9 +79,9 @@ export const signOut = async () => {
   try {
     clearTokenCache();
     await firebaseSignOut(auth);
-    console.log('✅ Firebase signout successful');
+    logger.log('✅ Firebase signout successful');
   } catch (error) {
-    console.error('❌ Firebase signout error:', error);
+    logger.error('❌ Firebase signout error:', error);
     throw error;
   }
 };
