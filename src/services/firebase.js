@@ -8,13 +8,9 @@ import {
   initializeAuth,
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDEQyfhh1tXTnx_KNy7GC6QtflZPteFbjY",
-  authDomain: "dh-reporting-487418.firebaseapp.com",
-  projectId: "dh-reporting-487418",
-  appId: "1:372197521648:web:60f9df28a431de8a35aa35",
-};
+import firebaseConfig from '../config/firebase.config';
+import { getFirebaseErrorMessage } from '../utils/firebaseErrors';
+import { clearTokenCache, initTokenManager } from './tokenManager';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -23,6 +19,9 @@ const app = initializeApp(firebaseConfig);
 const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
+
+// Initialize token manager with auth reference (avoids circular dependency)
+initTokenManager(() => auth);
 
 /**
  * Create a new user account with email and password
@@ -34,6 +33,7 @@ export const signUpWithEmail = async (email, password) => {
     return userCredential;
   } catch (error) {
     console.error('❌ Firebase signup error:', error.code, error.message);
+    error.userMessage = getFirebaseErrorMessage(error);
     throw error;
   }
 };
@@ -48,6 +48,7 @@ export const signInWithEmail = async (email, password) => {
     return userCredential;
   } catch (error) {
     console.error('❌ Firebase signin error:', error.code, error.message);
+    error.userMessage = getFirebaseErrorMessage(error);
     throw error;
   }
 };
@@ -75,6 +76,7 @@ export const getIdToken = async () => {
  */
 export const signOut = async () => {
   try {
+    clearTokenCache();
     await firebaseSignOut(auth);
     console.log('✅ Firebase signout successful');
   } catch (error) {
