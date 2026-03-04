@@ -17,9 +17,11 @@ const ProjectsScreen = ({ navigation }) => {
     currentUser,
     activeSession,
     isLoading,
+    error,
     startNewSession,
     endSession,
-    handleSessionSwitch
+    handleSessionSwitch,
+    loadData,
   } = useWorkSession(navigation);
 
   const [selectedProject, setSelectedProject] = useState(null);
@@ -107,6 +109,25 @@ const ProjectsScreen = ({ navigation }) => {
     );
   }
 
+  if (error) {
+    return (
+      <ScreenWrapper headerTitle="DH-Reporting" headerSubtitle="Error" center>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorText}>Failed to load your data. Please try again.</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={loadData}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading data"
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
   return (
     <ScreenWrapper
       headerTitle={`Welcome, ${currentUser?.first_name || 'User'}`}
@@ -173,6 +194,33 @@ const styles = StyleSheet.create({
   loadingText: {
     ...appStyleConstants.STYLE_BODY,
     color: appStyleConstants.COLOR_TEXT_MUTED,
+  },
+  errorContainer: {
+    padding: appStyleConstants.SIZE_24,
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: appStyleConstants.FONT_SIZE_18,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
+    color: appStyleConstants.COLOR_TEXT_LIGHT,
+    marginBottom: appStyleConstants.SIZE_8,
+  },
+  errorText: {
+    ...appStyleConstants.STYLE_BODY,
+    color: appStyleConstants.COLOR_TEXT_MUTED,
+    textAlign: 'center',
+    marginBottom: appStyleConstants.SIZE_24,
+  },
+  retryButton: {
+    backgroundColor: appStyleConstants.COLOR_PRIMARY,
+    paddingVertical: appStyleConstants.SIZE_12,
+    paddingHorizontal: appStyleConstants.SIZE_24,
+    borderRadius: appStyleConstants.RADIUS_MEDIUM,
+  },
+  retryButtonText: {
+    color: appStyleConstants.COLOR_WHITE,
+    fontSize: appStyleConstants.FONT_SIZE_16,
+    fontWeight: appStyleConstants.FONT_WEIGHT_SEMIBOLD,
   },
 
   // Header Right Actions

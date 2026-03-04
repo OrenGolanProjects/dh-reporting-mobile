@@ -6,6 +6,7 @@ import ScreenWrapper from '../components/wrappers/ScreenWrapper';
 import InputField from '../components/InputField';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { saveUserCredentials } from '../services/api';
+import { validateLength } from '../utils/validation';
 import logger from '../utils/logger';
 
 const ErpCredentialsScreen = ({ route }) => {
@@ -19,7 +20,11 @@ const ErpCredentialsScreen = ({ route }) => {
   const trimmedCode = employeeCode.trim();
   const trimmedPass = employeePass.trim();
 
-  const canSubmit = !!trimmedCode && !!trimmedPass && !isLoading;
+  const isCodeValid = validateLength(trimmedCode, 2, 50);
+  const isPassValid = validateLength(trimmedPass, 4, 100);
+  const codeError = trimmedCode && !isCodeValid ? 'Employee code must be 2-50 characters' : null;
+  const passError = trimmedPass && !isPassValid ? 'Password must be at least 4 characters' : null;
+  const canSubmit = isCodeValid && isPassValid && !isLoading;
 
   const handleSaveCredentials = async () => {
     if (!canSubmit) return;
@@ -95,7 +100,9 @@ const ErpCredentialsScreen = ({ route }) => {
           onSubmitEditing={() => passRef.current?.focus()}
           autoFocus
           editable={!isLoading}
+          accessibilityLabel="Employee Code"
         />
+        {codeError && <Text style={styles.errorText}>{codeError}</Text>}
       </View>
 
       <View style={styles.inputGroup}>
@@ -111,7 +118,9 @@ const ErpCredentialsScreen = ({ route }) => {
           returnKeyType="done"
           onSubmitEditing={handleSaveCredentials}
           editable={!isLoading}
+          accessibilityLabel="Employee Password"
         />
+        {passError && <Text style={styles.errorText}>{passError}</Text>}
       </View>
 
       <View style={styles.buttonContainer}>
@@ -168,6 +177,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: appStyleConstants.SIZE_56,
     color: appStyleConstants.COLOR_TEXT_MUTED,
+  },
+  errorText: {
+    ...appStyleConstants.STYLE_CAPTION,
+    color: appStyleConstants.COLOR_ERROR,
+    marginTop: appStyleConstants.SIZE_4,
   },
 });
 
