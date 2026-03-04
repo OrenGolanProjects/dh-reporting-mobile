@@ -1,5 +1,6 @@
 import { getDb } from './db.js';
 import { MIGRATION_STATUS } from '../utils/constants.js';
+import logger from '../utils/logger';
 
 /**
  * Creates a table to track which migrations we've run
@@ -30,7 +31,7 @@ export async function getAppliedMigrations() {
     );
     return migrations;
   } catch (error) {
-    console.error('❌ Error getting applied migrations:', error);
+    logger.error('❌ Error getting applied migrations:', error);
     throw error;
   }
 }
@@ -46,9 +47,9 @@ export async function recordMigration(version, name) {
        VALUES (?, ?, ?, ?)`,
       [version, name, Date.now(), MIGRATION_STATUS.APPLIED]
     );
-    console.log(`✅ Migration ${version}_${name} recorded as applied`);
+    logger.log(`✅ Migration ${version}_${name} recorded as applied`);
   } catch (error) {
-    console.error('❌ Error recording migration:', error);
+    logger.error('❌ Error recording migration:', error);
     throw error;
   }
 }
@@ -60,9 +61,9 @@ export async function removeMigrationRecord(version) {
   try {
     const db = await getDb();
     await db.runAsync(`DELETE FROM migrations WHERE version = ?`, [version]);
-    console.log(`✅ Migration ${version} record removed`);
+    logger.log(`✅ Migration ${version} record removed`);
   } catch (error) {
-    console.error('❌ Error removing migration record:', error);
+    logger.error('❌ Error removing migration record:', error);
     throw error;
   }
 }
@@ -79,7 +80,7 @@ export async function getLatestMigrationVersion() {
     );
     return result?.latest_version || 0;
   } catch (error) {
-    console.error('❌ Error getting latest migration version:', error);
+    logger.error('❌ Error getting latest migration version:', error);
     throw error;
   }
 }
@@ -90,7 +91,7 @@ export async function getLatestMigrationVersion() {
  */
 export async function runMigrations() {
   try {
-    console.log('🔄 Starting migration process...');
+    logger.log('🔄 Starting migration process...');
 
     // Make sure migrations table exists
     await createMigrationsTable();
@@ -105,7 +106,7 @@ export async function runMigrations() {
 
     // Migration 1: Create initial tables (users, projects, work_hours, session)
     if (!appliedVersions.includes(1)) {
-      console.log('🔄 Running migration 1_create_initial_tables...');
+      logger.log('🔄 Running migration 1_create_initial_tables...');
 
       const migration1SQL = `
 PRAGMA foreign_keys = ON;
@@ -169,12 +170,12 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       await db.execAsync(migration1SQL);
       await recordMigration(1, 'create_initial_tables');
       migrationsRun++;
-      console.log('✅ Migration 1_create_initial_tables completed');
+      logger.log('✅ Migration 1_create_initial_tables completed');
     }
 
     // Migration 2: Create migration tracking (mostly for record keeping)
     if (!appliedVersions.includes(2)) {
-      console.log('🔄 Running migration 2_create_migration_tracking...');
+      logger.log('🔄 Running migration 2_create_migration_tracking...');
 
       const migration2SQL = `
 -- Add the record for migration 1 if it doesn't exist
@@ -186,19 +187,19 @@ VALUES (1, 'create_initial_tables', strftime('%s', 'now') * 1000, 'applied');
       await db.execAsync(migration2SQL);
       await recordMigration(2, 'create_migration_tracking');
       migrationsRun++;
-      console.log('✅ Migration 2_create_migration_tracking completed');
+      logger.log('✅ Migration 2_create_migration_tracking completed');
     }
 
     // NO MORE MIGRATIONS - We only have 1 and 2 now!
 
     if (migrationsRun === 0) {
-      console.log('ℹ️ No pending migrations to run');
+      logger.log('ℹ️ No pending migrations to run');
     } else {
-      console.log(`✅ ${migrationsRun} migrations completed successfully`);
+      logger.log(`✅ ${migrationsRun} migrations completed successfully`);
     }
 
   } catch (error) {
-    console.error('❌ Error running migrations:', error);
+    logger.error('❌ Error running migrations:', error);
     throw error;
   }
 }
@@ -209,7 +210,7 @@ VALUES (1, 'create_initial_tables', strftime('%s', 'now') * 1000, 'applied');
  */
 export async function downgradeTo(targetVersion) {
   try {
-    console.log(`🔄 Downgrading to version ${targetVersion}...`);
+    logger.log(`🔄 Downgrading to version ${targetVersion}...`);
 
     // Find migrations to undo (newer than target version)
     const appliedMigrations = await getAppliedMigrations();
@@ -220,7 +221,7 @@ export async function downgradeTo(targetVersion) {
     const db = await getDb();
 
     for (const appliedMigration of migrationsToReverse) {
-      console.log(`🔄 Reversing migration ${appliedMigration.version}_${appliedMigration.name}...`);
+      logger.log(`🔄 Reversing migration ${appliedMigration.version}_${appliedMigration.name}...`);
       
       if (appliedMigration.version === 2) {
         // Migration 2 down: Just remove the record
@@ -246,13 +247,13 @@ DROP TABLE IF EXISTS users;
 
       // Remove the migration record
       await removeMigrationRecord(appliedMigration.version);
-      console.log(`✅ Migration ${appliedMigration.version}_${appliedMigration.name} reversed`);
+      logger.log(`✅ Migration ${appliedMigration.version}_${appliedMigration.name} reversed`);
     }
 
-    console.log(`✅ Downgrade to version ${targetVersion} completed`);
+    logger.log(`✅ Downgrade to version ${targetVersion} completed`);
 
   } catch (error) {
-    console.error('❌ Error during downgrade:', error);
+    logger.error('❌ Error during downgrade:', error);
     throw error;
   }
 }

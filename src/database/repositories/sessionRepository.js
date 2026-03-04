@@ -1,4 +1,5 @@
 import { getDb } from '../db.js';
+import logger from '../../utils/logger';
 
 /**
  * Check if someone is logged in
@@ -10,14 +11,14 @@ export async function getSession() {
     const session = await db.getFirstAsync(`SELECT * FROM session WHERE id = 1`);
     
     if (session) {
-      console.log('✅ Active session found for user ID:', session.user_id);
+      logger.log('✅ Active session found for user ID:', session.user_id);
     } else {
-      console.log('ℹ️ No active session found');
+      logger.log('ℹ️ No active session found');
     }
     
     return session;
   } catch (error) {
-    console.error('❌ Error getting session:', error);
+    logger.error('❌ Error getting session:', error);
     throw error;
   }
 }
@@ -40,9 +41,9 @@ export async function setCurrentUser(userId, signedInAt) {
       [userId, timestamp, timestamp]
     );
     
-    console.log('✅ User logged in successfully. User ID:', userId);
+    logger.log('✅ User logged in successfully. User ID:', userId);
   } catch (error) {
-    console.error('❌ Error setting current user:', error);
+    logger.error('❌ Error setting current user:', error);
     throw error;
   }
 }
@@ -54,9 +55,9 @@ export async function clearCurrentUser() {
   try {
     const db = await getDb();
     await db.runAsync(`DELETE FROM session`);
-    console.log('✅ User logged out successfully');
+    logger.log('✅ User logged out successfully');
   } catch (error) {
-    console.error('❌ Error clearing current user:', error);
+    logger.error('❌ Error clearing current user:', error);
     throw error;
   }
 }
@@ -75,14 +76,14 @@ export async function getCurrentUser() {
     `);
     
     if (user) {
-      console.log('✅ Current user:', user.email);
+      logger.log('✅ Current user:', user.email);
     } else {
-      console.log('ℹ️ No user currently logged in');
+      logger.log('ℹ️ No user currently logged in');
     }
     
     return user;
   } catch (error) {
-    console.error('❌ Error getting current user:', error);
+    logger.error('❌ Error getting current user:', error);
     throw error;
   }
 }
@@ -98,7 +99,7 @@ export async function updateLastActivity(timestamp) {
       [timestamp || Date.now()]
     );
   } catch (error) {
-    console.error('❌ Error updating last activity:', error);
+    logger.error('❌ Error updating last activity:', error);
     throw error;
   }
 }

@@ -1,4 +1,5 @@
 import { getDb } from '../db.js';
+import logger from '../../utils/logger';
 
 /**
  * Start tracking work time on a project
@@ -15,10 +16,10 @@ export async function startWorkSession(sessionInput) {
       [projectId, userId, startTime || Date.now()]
     );
     
-    console.log('✅ Work session started with ID:', result.lastInsertRowId);
+    logger.log('✅ Work session started with ID:', result.lastInsertRowId);
     return { id: result.lastInsertRowId, ...sessionInput };
   } catch (error) {
-    console.error('❌ Error starting work session:', error);
+    logger.error('❌ Error starting work session:', error);
     throw error;
   }
 }
@@ -38,10 +39,10 @@ export async function endWorkSession(workHoursId, endTime) {
       [endTime || Date.now(), workHoursId]
     );
     
-    console.log('✅ Work session ended');
+    logger.log('✅ Work session ended');
     return await getWorkHoursById(workHoursId);
   } catch (error) {
-    console.error('❌ Error ending work session:', error);
+    logger.error('❌ Error ending work session:', error);
     throw error;
   }
 }
@@ -60,7 +61,7 @@ export async function getWorkHoursById(workHoursId) {
     
     return workHours;
   } catch (error) {
-    console.error('❌ Error getting work hours by ID:', error);
+    logger.error('❌ Error getting work hours by ID:', error);
     throw error;
   }
 }
@@ -94,10 +95,10 @@ export async function getWorkHoursByUser(userId, startDate, endDate) {
     query += ` ORDER BY wh.start_work_time DESC`;
     
     const workHours = await db.getAllAsync(query, params);
-    console.log(`✅ Found ${workHours.length} work hour entries for user ${userId}`);
+    logger.log(`✅ Found ${workHours.length} work hour entries for user ${userId}`);
     return workHours;
   } catch (error) {
-    console.error('❌ Error getting work hours by user:', error);
+    logger.error('❌ Error getting work hours by user:', error);
     throw error;
   }
 }
@@ -118,14 +119,14 @@ export async function getActiveWorkSession(userId) {
     );
     
     if (activeSession) {
-      console.log('✅ Active work session found for project:', activeSession.project_name);
+      logger.log('✅ Active work session found for project:', activeSession.project_name);
     } else {
-      console.log('ℹ️ No active work session found');
+      logger.log('ℹ️ No active work session found');
     }
     
     return activeSession;
   } catch (error) {
-    console.error('❌ Error getting active work session:', error);
+    logger.error('❌ Error getting active work session:', error);
     throw error;
   }
 }
