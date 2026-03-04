@@ -10,7 +10,7 @@ const LOCATIONS = [
   { id: LOCATION.CLIENT, name: 'Client', icon: '👥' }
 ];
 
-const ProjectListItem = memo(({ project, activeSession, onLocationPress, onProjectPress }) => {
+const ProjectListItem = memo(function ProjectListItem({ project, activeSession, onLocationPress, onProjectPress }) {
   const isProjectActive = activeSession?.project_id === project.id;
   const hasActiveSession = activeSession !== null;
   const isProjectDisabled = hasActiveSession && !isProjectActive;

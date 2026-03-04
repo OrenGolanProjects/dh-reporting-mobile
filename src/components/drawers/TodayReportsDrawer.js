@@ -137,7 +137,7 @@ const TodayReportsDrawer = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.title}>Today's Work Reports</Text>
+          <Text style={styles.title}>{"Today's Work Reports"}</Text>
           <Text style={styles.date}>{getTodayString()}</Text>
           <Text style={styles.totalHours}>
             Total: {getTotalHoursToday()} hours

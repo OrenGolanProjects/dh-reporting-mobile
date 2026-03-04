@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 
 // Isolated timer component - only this re-renders every second
-const TimerDisplay = memo(({ startTime }) => {
+const TimerDisplay = memo(function TimerDisplay({ startTime }) {
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const TimerDisplay = memo(({ startTime }) => {
   return <Text style={cardStyles.timer}>{`${h}:${m}:${s}`}</Text>;
 });
 
-export const ActiveSessionCard = memo(({ activeSession }) => {
+export const ActiveSessionCard = memo(function ActiveSessionCard({ activeSession }) {
   if (!activeSession) return null;
 
   return (

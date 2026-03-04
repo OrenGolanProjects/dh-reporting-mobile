@@ -87,7 +87,7 @@ const NewScreen = ({ route }) => {
             value={textInput}
             onChangeText={setTextInput}
           />
-          {textInput && <Text style={styles.inputPreview}>You typed: "{textInput}"</Text>}
+          {textInput && <Text style={styles.inputPreview}>You typed: &quot;{textInput}&quot;</Text>}
         </ComponentDemo>
 
         <ComponentDemo name="Email Input Field" type="input">
@@ -96,7 +96,7 @@ const NewScreen = ({ route }) => {
             value={emailInput}
             onChangeText={setEmailInput}
           />
-          {emailInput && <Text style={styles.inputPreview}>Email: "{emailInput}"</Text>}
+          {emailInput && <Text style={styles.inputPreview}>Email: &quot;{emailInput}&quot;</Text>}
         </ComponentDemo>
       </ComponentSection>
 

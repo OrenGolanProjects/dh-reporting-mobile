@@ -15,7 +15,7 @@ const CONTAINER_PADDING = styles.SIZE_16 * 2;
 const TILE_GAP = 75;
 const TILE_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING - TILE_GAP) / 2;
 
-const GalleryTile = memo(({ project, activeSession, onProjectPress }) => {
+const GalleryTile = memo(function GalleryTile({ project, activeSession, onProjectPress }) {
   const isActive = activeSession?.project_id === project.id;
   const isDisabled = !!activeSession && !isActive;
   const activeLocation = isActive ? activeSession.active_location : null;
