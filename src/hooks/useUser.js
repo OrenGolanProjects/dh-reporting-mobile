@@ -6,10 +6,12 @@ import logger from '../utils/logger';
 export const useUser = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadUser = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const session = await Session.getCurrent();
       if (!session) {
         setCurrentUser(null);
@@ -19,8 +21,9 @@ export const useUser = () => {
       const user = await User.find(session.user_id);
       setCurrentUser(user);
       return user;
-    } catch (error) {
-      logger.error('❌ Error loading user:', error);
+    } catch (err) {
+      logger.error('❌ Error loading user:', err);
+      setError(err);
       setCurrentUser(null);
       return null;
     } finally {
@@ -32,5 +35,5 @@ export const useUser = () => {
     loadUser();
   }, [loadUser]);
 
-  return { currentUser, isLoading, refreshUser: loadUser };
+  return { currentUser, isLoading, error, refreshUser: loadUser };
 };

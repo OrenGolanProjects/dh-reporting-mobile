@@ -3,6 +3,7 @@ import { getIdToken } from './firebase';
 import { getValidToken } from './tokenManager';
 import { API_BASE_URL } from '../config/firebase.config';
 import { withRetry } from '../utils/retry';
+import { AuthenticationError, NetworkError, ServerError } from './apiErrors';
 import logger from '../utils/logger';
 
 /**
@@ -15,7 +16,7 @@ const authenticatedFetch = async (endpoint, options = {}) => {
     if (!token) {
       const fallbackToken = await getIdToken();
       if (!fallbackToken) {
-        throw new Error('Not authenticated - no token available');
+        throw new AuthenticationError('Not authenticated - no token available');
       }
     }
 
@@ -33,11 +34,12 @@ const authenticatedFetch = async (endpoint, options = {}) => {
       headers,
     });
 
-    // On 401, force token refresh and let retry handle it
     if (response.status === 401) {
-      const error = new Error('Unauthorized');
-      error.status = 401;
-      throw error;
+      throw new AuthenticationError();
+    }
+
+    if (response.status >= 500) {
+      throw new ServerError(`Server error: ${response.status}`, response.status);
     }
 
     return response;
@@ -74,6 +76,9 @@ export const saveUserCredentials = async (employeeCode, employeePass) => {
     };
   } catch (error) {
     logger.error('❌ Save credentials error:', error);
+    if (error instanceof AuthenticationError) {
+      return { success: false, message: 'Please sign in again to save credentials.' };
+    }
     return {
       success: false,
       message: error.message || 'Network error - please try again',
