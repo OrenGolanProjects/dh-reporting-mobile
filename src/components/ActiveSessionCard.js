@@ -1,29 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 
-export const ActiveSessionCard = ({ activeSession }) => {
+// Isolated timer component - only this re-renders every second
+const TimerDisplay = memo(({ startTime }) => {
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
-    let interval;
-    if (activeSession) {
-      interval = setInterval(() => setCurrentTime(Date.now()), 1000);
-    }
-    return () => interval && clearInterval(interval);
-  }, [activeSession]);
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const getElapsedTime = () => {
-    if (!activeSession) return null;
-    const start = activeSession.start_work_time;
-    if (!start) return null;
-    const elapsed = currentTime - start;
-    const h = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
-    const m = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
-    const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  };
+  const elapsed = currentTime - startTime;
+  const h = Math.floor(elapsed / 3600000).toString().padStart(2, '0');
+  const m = Math.floor((elapsed % 3600000) / 60000).toString().padStart(2, '0');
+  const s = Math.floor((elapsed % 60000) / 1000).toString().padStart(2, '0');
 
+  return <Text style={cardStyles.timer}>{`${h}:${m}:${s}`}</Text>;
+});
+
+export const ActiveSessionCard = memo(({ activeSession }) => {
   if (!activeSession) return null;
 
   return (
@@ -39,14 +35,14 @@ export const ActiveSessionCard = ({ activeSession }) => {
             </Text>
           </View>
         </View>
-        
+
         <View style={cardStyles.timerSection}>
-          <Text style={cardStyles.timer}>{getElapsedTime()}</Text>
+          <TimerDisplay startTime={activeSession.start_work_time} />
         </View>
       </View>
     </View>
   );
-};
+});
 
 const cardStyles = StyleSheet.create({
   container: {
