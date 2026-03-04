@@ -6,7 +6,7 @@ export const LOCATION = {
 
 export const LOCATION_NAMES = {
   [LOCATION.HOME]: 'HOME',
-  [LOCATION.WORK]: 'WORK', 
+  [LOCATION.CLIENT]: 'CLIENT',
   [LOCATION.OFFICE]: 'OFFICE'
 };
 
