@@ -2,6 +2,7 @@
 import React, { useCallback, memo } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
+import EmptyState from './EmptyState';
 
 const LOCATION_ICONS = {
   'Home': '🏠',
@@ -72,15 +73,11 @@ const GalleryTile = memo(function GalleryTile({ project, activeSession, onProjec
 });
 
 const EmptyGallery = () => (
-  <View style={galleryStyles.empty}>
-    <View style={galleryStyles.emptyIcon}>
-      <Text style={galleryStyles.emptyEmoji}>📁</Text>
-    </View>
-    <Text style={galleryStyles.emptyText}>No projects yet</Text>
-    <Text style={galleryStyles.emptySubtext}>
-      Add your first project to start tracking
-    </Text>
-  </View>
+  <EmptyState
+    icon="📁"
+    title="No projects yet"
+    subtitle="Add your first project to start tracking"
+  />
 );
 
 export const ProjectGalleryView = ({ projects, activeSession, onProjectPress, ListHeaderComponent }) => {
@@ -94,11 +91,20 @@ export const ProjectGalleryView = ({ projects, activeSession, onProjectPress, Li
     />
   ), [activeSession, onProjectPress]);
 
+  // Row height: tile minHeight (100) + padding (16*2) + border (2) + marginBottom (12)
+  const ROW_HEIGHT = 146;
+  const getItemLayout = useCallback((data, index) => ({
+    length: ROW_HEIGHT,
+    offset: ROW_HEIGHT * Math.floor(index / 2),
+    index,
+  }), []);
+
   return (
     <FlatList
       data={projects}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      getItemLayout={getItemLayout}
       numColumns={2}
       columnWrapperStyle={galleryStyles.columnWrapper}
       ListHeaderComponent={ListHeaderComponent}
@@ -134,19 +140,10 @@ const galleryStyles = StyleSheet.create({
     width: '100%',
     borderRadius: styles.RADIUS_MEDIUM,
     overflow: 'hidden',
-    elevation: 2, // Android shadow
-    shadowColor: '#000', // iOS shadow
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    ...styles.SHADOW_SMALL,
   },
   tileActive: {
-    elevation: 4,
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    ...styles.SHADOW_MEDIUM,
   },
   tileDisabled: {
     opacity: 0.4,
@@ -172,12 +169,12 @@ const galleryStyles = StyleSheet.create({
 
   // Text styles
   tileText: {
-    fontSize: styles.FONT_SIZE_15,
+    fontSize: 15,
     fontWeight: styles.FONT_WEIGHT_MEDIUM,
     color: styles.COLOR_TEXT_LIGHT,
     fontFamily: styles.FONT_FAMILY_MONTSERRAT,
     textAlign: 'center',
-    lineHeight: styles.FONT_SIZE_15 * 1.3,
+    lineHeight: 20,
   },
   tileTextActive: {
     color: styles.COLOR_PRIMARY,
@@ -223,41 +220,6 @@ const galleryStyles = StyleSheet.create({
   locationIcon: {
     fontSize: 16,
     textAlign: 'center',
-  },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: styles.SIZE_64,
-    paddingHorizontal: styles.SIZE_24,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: styles.RADIUS_LARGE,
-    backgroundColor: styles.COLOR_SURFACE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: styles.SIZE_20,
-    borderWidth: 1,
-    borderColor: styles.COLOR_BORDER,
-  },
-  emptyEmoji: {
-    fontSize: 40,
-  },
-  emptyText: {
-    fontSize: styles.FONT_SIZE_18,
-    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
-    color: styles.COLOR_TEXT_LIGHT,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
-    marginBottom: styles.SIZE_8,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: styles.FONT_SIZE_14,
-    color: styles.COLOR_TEXT_MUTED,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
-    textAlign: 'center',
-    lineHeight: styles.FONT_SIZE_14 * 1.4,
   },
 });
 

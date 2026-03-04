@@ -3,6 +3,7 @@ import React, { useCallback, memo } from 'react';
 import { FlatList, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 import { LOCATION } from '../utils/constants';
+import EmptyState from './EmptyState';
 
 const LOCATIONS = [
   { id: LOCATION.HOME, name: 'Home', icon: '🏠' },
@@ -97,15 +98,11 @@ const ProjectListItem = memo(function ProjectListItem({ project, activeSession, 
 });
 
 const EmptyList = () => (
-  <View style={listStyles.empty}>
-    <View style={listStyles.emptyIcon}>
-      <Text style={listStyles.emptyEmoji}>📁</Text>
-    </View>
-    <Text style={listStyles.emptyText}>No projects yet</Text>
-    <Text style={listStyles.emptySubtext}>
-      Add your first project to start tracking
-    </Text>
-  </View>
+  <EmptyState
+    icon="📁"
+    title="No projects yet"
+    subtitle="Add your first project to start tracking"
+  />
 );
 
 export const ProjectListView = ({
@@ -130,11 +127,20 @@ export const ProjectListView = ({
     <View style={listStyles.separator} />
   ), []);
 
+  // Item height estimate: card padding (20*2) + header (~34) + location row (~48) + margins (8*2) + separator (25)
+  const ITEM_HEIGHT = 163;
+  const getItemLayout = useCallback((data, index) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  }), []);
+
   return (
     <FlatList
       data={projects}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
+      getItemLayout={getItemLayout}
       ItemSeparatorComponent={renderSeparator}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={EmptyList}
@@ -251,38 +257,6 @@ const listStyles = StyleSheet.create({
     backgroundColor: styles.COLOR_BORDER,
     marginVertical: styles.SIZE_12,
     opacity: 0.3,
-  },
-  // Empty state
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: styles.SIZE_64,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: styles.RADIUS_LARGE,
-    backgroundColor: styles.COLOR_SURFACE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: styles.SIZE_20,
-  },
-  emptyEmoji: {
-    fontSize: 40,
-  },
-  emptyText: {
-    fontSize: styles.FONT_SIZE_18,
-    fontWeight: styles.FONT_WEIGHT_SEMIBOLD,
-    color: styles.COLOR_TEXT || styles.COLOR_TEXT_LIGHT,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
-    marginBottom: styles.SIZE_8,
-  },
-  emptySubtext: {
-    fontSize: styles.FONT_SIZE_14,
-    color: styles.COLOR_TEXT_MUTED,
-    fontFamily: styles.FONT_FAMILY_MONTSERRAT,
-    textAlign: 'center',
-    paddingHorizontal: styles.SIZE_40,
   },
 });
 
