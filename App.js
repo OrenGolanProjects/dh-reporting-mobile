@@ -1,13 +1,25 @@
 // App.js
 import React, { useEffect, useState } from 'react';
-import { StatusBar, Platform, Dimensions, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { StatusBar, Platform, View, Text, ActivityIndicator, StyleSheet, LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AppNavigator from './src/navigation/AppNavigator';
-import { initDatabase, getDb, getLatestMigrationVersion, getAppliedMigrations, runMigrations } from './src/database';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { initDatabase, runMigrations } from './src/database';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Hide all yellow warning boxes for a clean production-like view
+LogBox.ignoreAllLogs(true);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2,
+    },
+  },
+});
 
 const useDatabaseSetup = () => {
   const [status, setStatus] = useState({ ready: false, error: null });
@@ -51,7 +63,7 @@ const ErrorScreen = ({ error }) => (
 );
 
 const App = () => {
-  const { isDbReady, dbError } = useDatabaseSetup();
+  const { ready: isDbReady, error: dbError } = useDatabaseSetup();
 
   if (!isDbReady) {
     return (
@@ -86,9 +98,13 @@ const App = () => {
         backgroundColor={Platform.OS === 'android' ? appStyleConstants.COLOR_DARKER : 'transparent'}
         translucent={Platform.OS === 'android'}
       />
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
+        </ErrorBoundary>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 };

@@ -1,5 +1,5 @@
 // src/screens/ProjectsScreen.js
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 import ScreenWrapper from '../components/wrappers/ScreenWrapper';
@@ -126,21 +126,22 @@ const ProjectsScreen = ({ navigation }) => {
       headerSubtitle="Track your hour reports"
       headerRight={<HeaderRight />}
       headerVariant="compact"
-      scroll
     >
       <View style={styles.container}>
-        <ActiveSessionCard activeSession={activeSession} />
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Projects</Text>
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        </View>
-
         {viewMode === 'gallery' ? (
           <ProjectGalleryView
             projects={projects}
             activeSession={activeSession}
             onProjectPress={handleProjectPress}
+            ListHeaderComponent={
+              <>
+                <ActiveSessionCard activeSession={activeSession} />
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Your Projects</Text>
+                  <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+                </View>
+              </>
+            }
           />
         ) : (
           <ProjectListView
@@ -148,6 +149,15 @@ const ProjectsScreen = ({ navigation }) => {
             activeSession={activeSession}
             onLocationPress={handleLocationPressFromList}
             onProjectPress={handleProjectPress}
+            ListHeaderComponent={
+              <>
+                <ActiveSessionCard activeSession={activeSession} />
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Your Projects</Text>
+                  <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+                </View>
+              </>
+            }
           />
         )}
 

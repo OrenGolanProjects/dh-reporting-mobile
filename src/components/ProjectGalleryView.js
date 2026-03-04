@@ -1,6 +1,6 @@
 // components/ProjectGalleryView.js
-import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useCallback, memo } from 'react';
+import { FlatList, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 
 const LOCATION_ICONS = {
@@ -15,105 +15,110 @@ const CONTAINER_PADDING = styles.SIZE_16 * 2;
 const TILE_GAP = 75;
 const TILE_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING - TILE_GAP) / 2;
 
-export const ProjectGalleryView = ({ projects, activeSession, onProjectPress }) => {
-  if (projects.length === 0) {
-    return (
-      <View style={galleryStyles.empty}>
-        <View style={galleryStyles.emptyIcon}>
-          <Text style={galleryStyles.emptyEmoji}>📁</Text>
-        </View>
-        <Text style={galleryStyles.emptyText}>No projects yet</Text>
-        <Text style={galleryStyles.emptySubtext}>
-          Add your first project to start tracking
-        </Text>
-      </View>
-    );
-  }
+const GalleryTile = memo(function GalleryTile({ project, activeSession, onProjectPress }) {
+  const isActive = activeSession?.project_id === project.id;
+  const isDisabled = !!activeSession && !isActive;
+  const activeLocation = isActive ? activeSession.active_location : null;
+  const locationIcon = activeLocation ? LOCATION_ICONS[activeLocation] : null;
 
   return (
-    <ScrollView
+    <View style={galleryStyles.tileWrapper}>
+      <TouchableOpacity
+        style={[
+          galleryStyles.tile,
+          isActive && galleryStyles.tileActive,
+          isDisabled && galleryStyles.tileDisabled,
+        ]}
+        onPress={() => onProjectPress(project)}
+        disabled={isDisabled}
+        activeOpacity={0.8}
+        delayPressIn={50}
+      >
+        <View style={[
+          galleryStyles.tileContent,
+          isActive && galleryStyles.tileContentActive,
+        ]}>
+          <Text
+            style={[
+              galleryStyles.tileText,
+              isActive && galleryStyles.tileTextActive,
+              isDisabled && galleryStyles.tileTextDisabled,
+            ]}
+            numberOfLines={3}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {project.name}
+          </Text>
+
+          {isActive && (
+            <>
+              <View style={galleryStyles.activeDotContainer}>
+                <View style={galleryStyles.activeDot} />
+              </View>
+              {locationIcon && (
+                <View style={galleryStyles.locationBadgeContainer}>
+                  <View style={galleryStyles.locationBadge}>
+                    <Text style={galleryStyles.locationIcon}>{locationIcon}</Text>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+const EmptyGallery = () => (
+  <View style={galleryStyles.empty}>
+    <View style={galleryStyles.emptyIcon}>
+      <Text style={galleryStyles.emptyEmoji}>📁</Text>
+    </View>
+    <Text style={galleryStyles.emptyText}>No projects yet</Text>
+    <Text style={galleryStyles.emptySubtext}>
+      Add your first project to start tracking
+    </Text>
+  </View>
+);
+
+export const ProjectGalleryView = ({ projects, activeSession, onProjectPress, ListHeaderComponent }) => {
+  const keyExtractor = useCallback((item) => String(item.id), []);
+
+  const renderItem = useCallback(({ item }) => (
+    <GalleryTile
+      project={item}
+      activeSession={activeSession}
+      onProjectPress={onProjectPress}
+    />
+  ), [activeSession, onProjectPress]);
+
+  return (
+    <FlatList
+      data={projects}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      numColumns={2}
+      columnWrapperStyle={galleryStyles.columnWrapper}
+      ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={EmptyGallery}
       contentContainerStyle={galleryStyles.container}
       showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-      bounces={true}
-      scrollEventThrottle={16}
-      style={galleryStyles.scrollView}
-    >
-      <View style={galleryStyles.grid}>
-        {projects.map((project) => {
-          const isActive = activeSession?.project_id === project.id;
-          const isDisabled = !!activeSession && !isActive;
-          const activeLocation = isActive ? activeSession.active_location : null;
-          const locationIcon = activeLocation ? LOCATION_ICONS[activeLocation] : null;
-
-          return (
-            <View key={project.id} style={galleryStyles.tileWrapper}>
-              <TouchableOpacity
-                style={[
-                  galleryStyles.tile,
-                  isActive && galleryStyles.tileActive,
-                  isDisabled && galleryStyles.tileDisabled,
-                ]}
-                onPress={() => onProjectPress(project)}
-                disabled={isDisabled}
-                activeOpacity={0.8}
-                delayPressIn={50}
-              >
-                <View style={[
-                  galleryStyles.tileContent,
-                  isActive && galleryStyles.tileContentActive,
-                ]}>
-                  <Text
-                    style={[
-                      galleryStyles.tileText,
-                      isActive && galleryStyles.tileTextActive,
-                      isDisabled && galleryStyles.tileTextDisabled,
-                    ]}
-                    numberOfLines={3}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                  >
-                    {project.name}
-                  </Text>
-
-                  {isActive && (
-                    <>
-                      <View style={galleryStyles.activeDotContainer}>
-                        <View style={galleryStyles.activeDot} />
-                      </View>
-                      {locationIcon && (
-                        <View style={galleryStyles.locationBadgeContainer}>
-                          <View style={galleryStyles.locationBadge}>
-                            <Text style={galleryStyles.locationIcon}>{locationIcon}</Text>
-                          </View>
-                        </View>
-                      )}
-                    </>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+      initialNumToRender={8}
+      windowSize={5}
+    />
   );
 };
 
 const galleryStyles = StyleSheet.create({
-  // ScrollView container
-  scrollView: {
-    flex: 1,
-  },
   container: {
     paddingBottom: styles.SIZE_24,
     flexGrow: 1,
   },
 
-  // Grid layout
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  // Column layout for FlatList numColumns=2
+  columnWrapper: {
     justifyContent: 'space-between',
     paddingHorizontal: styles.SIZE_4,
   },

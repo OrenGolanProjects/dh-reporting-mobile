@@ -1,6 +1,6 @@
 // components/ProjectListView.js
-import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, memo } from 'react';
+import { FlatList, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { appStyleConstants as styles } from '@orenuki/dh-reporting-shared';
 import { LOCATION } from '../utils/constants';
 
@@ -10,129 +10,139 @@ const LOCATIONS = [
   { id: LOCATION.CLIENT, name: 'Client', icon: '👥' }
 ];
 
-export const ProjectListView = ({ 
-  projects, 
-  activeSession, 
-  onLocationPress,
-  onProjectPress 
-}) => {
-  const handleLocationPress = (project, location) => {
-    const isActive = activeSession?.project_id === project.id &&
-      activeSession.active_location === location.name;
-    const hasActive = !!activeSession;
+const ProjectListItem = memo(function ProjectListItem({ project, activeSession, onLocationPress, onProjectPress }) {
+  const isProjectActive = activeSession?.project_id === project.id;
+  const hasActiveSession = activeSession !== null;
+  const isProjectDisabled = hasActiveSession && !isProjectActive;
 
-    // If there's an active session for a different project, do nothing
-    if (hasActive && activeSession.project_id !== project.id) return;
+  const handleLocationPress = (location) => {
+    const isActive = isProjectActive && activeSession.active_location === location.name;
+
+    if (hasActiveSession && activeSession.project_id !== project.id) return;
 
     if (isActive) {
-      // End the current session
       onLocationPress(project, location, true);
     } else {
-      // Start a new session or switch location
       onLocationPress(project, location, false);
     }
   };
 
-  if (projects.length === 0) {
-    return (
-      <View style={listStyles.empty}>
-        <View style={listStyles.emptyIcon}>
-          <Text style={listStyles.emptyEmoji}>📁</Text>
+  return (
+    <View style={[
+      listStyles.projectCard,
+      isProjectActive && listStyles.projectCardActive,
+      isProjectDisabled && listStyles.projectCardDisabled
+    ]}>
+      <TouchableOpacity
+        style={listStyles.projectHeader}
+        onPress={() => onProjectPress && onProjectPress(project)}
+        disabled={isProjectDisabled}
+        activeOpacity={0.7}
+      >
+        <View style={listStyles.projectTitleRow}>
+          {isProjectActive && (
+            <View style={listStyles.activeIndicator} />
+          )}
+          <Text style={[
+            listStyles.projectName,
+            isProjectActive && listStyles.projectNameActive,
+            isProjectDisabled && listStyles.projectNameDisabled
+          ]}>
+            {project.name}
+          </Text>
         </View>
-        <Text style={listStyles.emptyText}>No projects yet</Text>
-        <Text style={listStyles.emptySubtext}>
-          Add your first project to start tracking
-        </Text>
+
+        {isProjectActive && (
+          <Text style={listStyles.statusText}>ACTIVE</Text>
+        )}
+      </TouchableOpacity>
+
+      <View style={listStyles.locationRow}>
+        {LOCATIONS.map((location) => {
+          const isLocationActive = !!(activeSession &&
+            activeSession.project_id === project.id &&
+            activeSession.active_location === location.name);
+
+          return (
+            <TouchableOpacity
+              key={`${project.id}-${location.id}`}
+              style={[
+                listStyles.locationButton,
+                isLocationActive && listStyles.locationButtonActive,
+                isProjectDisabled && listStyles.locationButtonDisabled
+              ]}
+              onPress={() => handleLocationPress(location)}
+              disabled={isProjectDisabled}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                listStyles.locationIcon,
+                isLocationActive && listStyles.locationIconActive,
+              ]}>
+                {location.icon}
+              </Text>
+              <Text style={[
+                listStyles.locationText,
+                isLocationActive && listStyles.locationTextActive,
+                isProjectDisabled && listStyles.locationTextDisabled
+              ]}>
+                {location.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-    );
-  }
+    </View>
+  );
+});
+
+const EmptyList = () => (
+  <View style={listStyles.empty}>
+    <View style={listStyles.emptyIcon}>
+      <Text style={listStyles.emptyEmoji}>📁</Text>
+    </View>
+    <Text style={listStyles.emptyText}>No projects yet</Text>
+    <Text style={listStyles.emptySubtext}>
+      Add your first project to start tracking
+    </Text>
+  </View>
+);
+
+export const ProjectListView = ({
+  projects,
+  activeSession,
+  onLocationPress,
+  onProjectPress,
+  ListHeaderComponent,
+}) => {
+  const keyExtractor = useCallback((item) => String(item.id), []);
+
+  const renderItem = useCallback(({ item }) => (
+    <ProjectListItem
+      project={item}
+      activeSession={activeSession}
+      onLocationPress={onLocationPress}
+      onProjectPress={onProjectPress}
+    />
+  ), [activeSession, onLocationPress, onProjectPress]);
+
+  const renderSeparator = useCallback(() => (
+    <View style={listStyles.separator} />
+  ), []);
 
   return (
-    <ScrollView 
+    <FlatList
+      data={projects}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ItemSeparatorComponent={renderSeparator}
+      ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={EmptyList}
       contentContainerStyle={listStyles.container}
       showsVerticalScrollIndicator={false}
-    >
-      {projects.map((project, index) => {
-        const isProjectActive = activeSession?.project_id === project.id;
-        const hasActiveSession = activeSession !== null;
-        const isProjectDisabled = hasActiveSession && !isProjectActive;
-
-        return (
-          <View key={project.id}>
-            <View style={[
-              listStyles.projectCard,
-              isProjectActive && listStyles.projectCardActive,
-              isProjectDisabled && listStyles.projectCardDisabled
-            ]}>
-              {/* Project Header */}
-              <TouchableOpacity 
-                style={listStyles.projectHeader}
-                onPress={() => onProjectPress && onProjectPress(project)}
-                disabled={isProjectDisabled}
-                activeOpacity={0.7}
-              >
-                <View style={listStyles.projectTitleRow}>
-                  {isProjectActive && (
-                    <View style={listStyles.activeIndicator} />
-                  )}
-                  <Text style={[
-                    listStyles.projectName,
-                    isProjectActive && listStyles.projectNameActive,
-                    isProjectDisabled && listStyles.projectNameDisabled
-                  ]}>
-                    {project.name}
-                  </Text>
-                </View>
-                
-                {isProjectActive && (
-                  <Text style={listStyles.statusText}>ACTIVE</Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Location Buttons */}
-              <View style={listStyles.locationRow}>
-                {LOCATIONS.map((location) => {
-                  const isLocationActive = !!(activeSession &&
-                    activeSession.project_id === project.id &&
-                    activeSession.active_location === location.name);
-
-                  return (
-                    <TouchableOpacity
-                      key={`${project.id}-${location.id}`}
-                      style={[
-                        listStyles.locationButton,
-                        isLocationActive && listStyles.locationButtonActive,
-                        isProjectDisabled && listStyles.locationButtonDisabled
-                      ]}
-                      onPress={() => handleLocationPress(project, location)}
-                      disabled={isProjectDisabled}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[
-                        listStyles.locationIcon,
-                        isLocationActive && listStyles.locationIconActive,
-                      ]}>
-                        {location.icon}
-                      </Text>
-                      <Text style={[
-                        listStyles.locationText,
-                        isLocationActive && listStyles.locationTextActive,
-                        isProjectDisabled && listStyles.locationTextDisabled
-                      ]}>
-                        {location.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-            
-            {/* Separator - except for last item */}
-            {index < projects.length - 1 && <View style={listStyles.separator} />}
-          </View>
-        );
-      })}
-    </ScrollView>
+      initialNumToRender={10}
+      windowSize={5}
+    />
   );
 };
 

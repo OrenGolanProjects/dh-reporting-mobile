@@ -1,33 +1,46 @@
 // src/services/api.js
 import { getIdToken } from './firebase';
-
-const API_BASE_URL = 'https://api-gateway-dwabxa66vq-uc.a.run.app';
+import { getValidToken } from './tokenManager';
+import { API_BASE_URL } from '../config/firebase.config';
+import { withRetry } from '../utils/retry';
 
 /**
- * Make an authenticated API request
+ * Make an authenticated API request with retry and token refresh
  */
 const authenticatedFetch = async (endpoint, options = {}) => {
-  const token = await getIdToken();
+  return withRetry(async () => {
+    const token = await getValidToken();
 
-  if (!token) {
-    throw new Error('Not authenticated - no token available');
-  }
+    if (!token) {
+      const fallbackToken = await getIdToken();
+      if (!fallbackToken) {
+        throw new Error('Not authenticated - no token available');
+      }
+    }
 
-  const url = `${API_BASE_URL}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    ...options.headers,
-  };
+    const url = `${API_BASE_URL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${await getValidToken() || await getIdToken()}`,
+      ...options.headers,
+    };
 
-  console.log(`📡 API Request: ${options.method || 'GET'} ${endpoint}`);
+    console.log(`📡 API Request: ${options.method || 'GET'} ${endpoint}`);
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  return response;
+    // On 401, force token refresh and let retry handle it
+    if (response.status === 401) {
+      const error = new Error('Unauthorized');
+      error.status = 401;
+      throw error;
+    }
+
+    return response;
+  }, { maxRetries: 2, retryOn: [401, 408, 429, 500, 502, 503, 504] });
 };
 
 /**
@@ -88,4 +101,3 @@ export const checkUserCredentials = async () => {
   }
 };
 
-export { API_BASE_URL };
