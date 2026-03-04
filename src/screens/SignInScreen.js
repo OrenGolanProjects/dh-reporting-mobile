@@ -131,6 +131,7 @@ const SignInScreen = ({ navigation }) => {
           onSubmitEditing={() => passwordRef.current?.focus()}
           autoFocus
           editable={!isLoading}
+          accessibilityLabel="Email"
         />
       </View>
 
@@ -147,6 +148,7 @@ const SignInScreen = ({ navigation }) => {
           returnKeyType="done"
           onSubmitEditing={handleSignIn}
           editable={!isLoading}
+          accessibilityLabel="Password"
         />
       </View>
 

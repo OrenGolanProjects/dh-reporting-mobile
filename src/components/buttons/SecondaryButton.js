@@ -4,7 +4,7 @@ import { appStyleConstants } from '@orenuki/dh-reporting-shared';
 
 
 const SecondaryButton = ({ title, onPress, style, textStyle }) => (
-    <TouchableOpacity style={[styles.button, style]} onPress={onPress}>
+    <TouchableOpacity style={[styles.button, style]} onPress={onPress} accessibilityRole="button" accessibilityLabel={title}>
         <Text style={[styles.text, textStyle]}>{title}</Text>
     </TouchableOpacity>
 );
