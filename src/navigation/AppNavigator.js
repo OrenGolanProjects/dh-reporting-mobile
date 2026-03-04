@@ -13,16 +13,15 @@ import ProjectsScreen from '../screens/ProjectsScreen';
 import NewScreen from '../screens/NewScreen';
 import { ProfileScreen, SettingsScreen, HomeScreen } from '../examples/NavigationExamples';
 import { getCurrentUser } from '../database';
-import { Session, WorkSession } from '../orm/models';
+import { Session } from '../orm/models';
 import { onAuthStateChange, signOut as firebaseSignOut } from '../services/firebase';
 
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const LogoutScreen = ({ route }) => {
+const LogoutScreen = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const checkAuth = route.params?.checkAuth;
 
   useEffect(() => {
     handleLogout();
@@ -43,9 +42,7 @@ const LogoutScreen = ({ route }) => {
               await firebaseSignOut();
               await Session.clear();
               console.log('✅ User logged out successfully');
-              if (checkAuth) {
-                checkAuth();
-              }
+              // Firebase onAuthStateChange listener handles navigation
             } catch (error) {
               console.error('❌ Logout error:', error);
               setIsLoggingOut(false);
@@ -123,7 +120,7 @@ const ReportsStackNavigator = () => (
   </MainStack.Navigator>
 );
 
-const LogoutStackNavigator = ({ route }) => (
+const LogoutStackNavigator = () => (
   <MainStack.Navigator
     initialRouteName="LogoutScreen"
     screenOptions={{ headerShown: false }}
@@ -131,13 +128,12 @@ const LogoutStackNavigator = ({ route }) => (
     <MainStack.Screen
       name="LogoutScreen"
       component={LogoutScreen}
-      initialParams={{ checkAuth: route.params?.checkAuth }}
     />
   </MainStack.Navigator>
 );
 
 
-const MainTabNavigator = ({ checkAuth }) => (
+const MainTabNavigator = () => (
   <Tab.Navigator
     initialRouteName="Projects"
     screenOptions={({ route }) => ({
@@ -190,7 +186,6 @@ const MainTabNavigator = ({ checkAuth }) => (
       name="Logout"
       component={LogoutStackNavigator}
       options={{ tabBarLabel: 'Logout' }}
-      initialParams={{ checkAuth }}
     />
   </Tab.Navigator>
 );
@@ -202,7 +197,7 @@ export default function AppNavigator() {
     checkAuth();
   }, []);
 
-  // Listen to Firebase auth state changes
+  // Listen to Firebase auth state changes (event-driven, no polling needed)
   useEffect(() => {
     const unsubscribe = onAuthStateChange((user) => {
       console.log('🔥 Firebase auth state changed:', user ? user.email : 'signed out');
@@ -211,25 +206,6 @@ export default function AppNavigator() {
 
     return () => unsubscribe();
   }, []);
-
-  // Set up different intervals based on auth state
-  useEffect(() => {
-    let interval;
-
-    if (authState === 'authenticated') {
-      interval = setInterval(checkAuth, 30000);
-      console.log('⏰ Auth validation set to every 30 seconds');
-    } else if (authState === 'unauthenticated') {
-      interval = setInterval(checkAuth, 5000);
-      console.log('⏰ Auth validation set to every 5 seconds');
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [authState]);
 
   const checkAuth = async () => {
     try {
@@ -263,6 +239,6 @@ export default function AppNavigator() {
   }
 
   return authState === 'authenticated' ?
-    <MainTabNavigator checkAuth={checkAuth} /> :
+    <MainTabNavigator /> :
     <AuthNavigator onErpSetupComplete={handleErpSetupComplete} />;
 }
